@@ -80,6 +80,9 @@ add_executable(federated_tests
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
     tests/crypto/test_none.cpp
+    tests/scenarios/scenario_file_transfer.cpp
+    tests/scenarios/scenario_end_to_end_crypto.cpp
+    tests/scenarios/scenario_store_and_forward.cpp
 )
 
 target_link_libraries(federated_tests
