@@ -26,6 +26,47 @@ target_include_directories(federated_core PUBLIC
     ${CMAKE_SOURCE_DIR}/include
 )
 
+# Transport library
+add_library(federated_transport
+    src/transport/loopback.cpp
+    src/transport/file.cpp
+)
+
+target_include_directories(federated_transport PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_transport
+    federated_core
+)
+
+# Framer library
+add_library(federated_framer
+    src/framer/raw.cpp
+    src/framer/length_prefix.cpp
+)
+
+target_include_directories(federated_framer PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_framer
+    federated_core
+)
+
+# Crypto library
+add_library(federated_crypto
+    src/crypto/none.cpp
+)
+
+target_include_directories(federated_crypto PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_crypto
+    federated_core
+)
+
 # Test executable
 add_executable(federated_tests
     tests/test_runner.cpp
@@ -34,10 +75,18 @@ add_executable(federated_tests
     tests/core/test_error.cpp
     tests/core/test_packet.cpp
     tests/core/test_registry.cpp
+    tests/transport/test_loopback.cpp
+    tests/transport/test_file.cpp
+    tests/framer/test_raw.cpp
+    tests/framer/test_length_prefix.cpp
+    tests/crypto/test_none.cpp
 )
 
 target_link_libraries(federated_tests
     federated_core
+    federated_transport
+    federated_framer
+    federated_crypto
 )
 
 # Enable testing
