@@ -4,7 +4,6 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
-#include <unistd.h>
 
 using namespace federated::transport;
 using namespace federated::core;
@@ -19,16 +18,9 @@ TEST(file_get_instance) {
 TEST(file_send_and_receive) {
     Transport* t = FileTransport::get_instance();
     
-    // Create temp files
-    char write_path[] = "/tmp/fed_write_XXXXXX";
-    char read_path[] = "/tmp/fed_read_XXXXXX";
-    
-    int write_fd = mkstemp(write_path);
-    int read_fd = mkstemp(read_path);
-    TEST_ASSERT(write_fd >= 0);
-    TEST_ASSERT(read_fd >= 0);
-    close(write_fd);
-    close(read_fd);
+    // Use simple temp paths
+    const char* write_path = "/tmp/fed_test_write.dat";
+    const char* read_path = "/tmp/fed_test_read.dat";
     
     // Configure transport
     FileTransport::set_write_path(write_path);
@@ -71,20 +63,21 @@ TEST(file_send_and_receive) {
     t->close();
     
     // Cleanup
-    unlink(write_path);
-    unlink(read_path);
+    remove(write_path);
+    remove(read_path);
 }
 
 TEST(file_available) {
     Transport* t = FileTransport::get_instance();
     
-    char write_path[] = "/tmp/fed_write2_XXXXXX";
-    char read_path[] = "/tmp/fed_read2_XXXXXX";
+    const char* write_path = "/tmp/fed_test_write2.dat";
+    const char* read_path = "/tmp/fed_test_read2.dat";
     
-    int write_fd = mkstemp(write_path);
-    int read_fd = mkstemp(read_path);
-    close(write_fd);
-    close(read_fd);
+    // Create empty files
+    FILE* f = fopen(write_path, "w");
+    fclose(f);
+    f = fopen(read_path, "w");
+    fclose(f);
     
     FileTransport::set_write_path(write_path);
     FileTransport::set_read_path(read_path);
@@ -94,6 +87,6 @@ TEST(file_available) {
     TEST_ASSERT(avail);
     t->close();
     
-    unlink(write_path);
-    unlink(read_path);
+    remove(write_path);
+    remove(read_path);
 }

@@ -1,6 +1,7 @@
 #include "../../include/federated/framer/length_prefix.h"
+#include "../../include/federated/core/endian.h"
 #include <cstring>
-#include <arpa/inet.h>
+#include <cstdint>
 
 namespace federated {
 namespace framer {
@@ -9,13 +10,18 @@ namespace framer {
 // Format: [4-byte length in network byte order][payload]
 
 static core::ErrorCode length_prefix_encode(const core::Buffer& payload, core::Buffer& output) {
+    // Check for integer overflow
+    if (payload.size > UINT32_MAX - 4) {
+        return core::ERR_FORMAT;
+    }
+    
     // Need space for 4-byte header + payload
     if (output.size < payload.size + 4) {
         return core::ERR_FORMAT;
     }
     
     // Write length header in network byte order
-    uint32_t length = htonl(payload.size);
+    uint32_t length = core::hton32(payload.size);
     memcpy(output.data, &length, 4);
     
     // Write payload
@@ -35,7 +41,12 @@ static core::ErrorCode length_prefix_decode(const core::Buffer& frame, core::Buf
     // Read length header
     uint32_t length;
     memcpy(&length, frame.data, 4);
-    length = ntohl(length);
+    length = core::ntoh32(length);
+    
+    // Check for integer overflow
+    if (length > UINT32_MAX - 4) {
+        return core::ERR_FORMAT;
+    }
     
     // Verify frame has enough data
     if (frame.size < length + 4) {

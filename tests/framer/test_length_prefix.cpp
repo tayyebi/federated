@@ -1,8 +1,8 @@
 #include "../test_runner.h"
 #include "../../include/federated/framer/length_prefix.h"
 #include "../../include/federated/core/buffer.h"
+#include "../../include/federated/core/endian.h"
 #include <cstring>
-#include <arpa/inet.h>
 
 using namespace federated::framer;
 using namespace federated::core;
@@ -34,7 +34,7 @@ TEST(length_prefix_encode) {
     // First 4 bytes should be length in network byte order
     uint32_t length;
     memcpy(&length, output, 4);
-    length = ntohl(length);
+    length = federated::core::ntoh32(length);
     TEST_ASSERT_EQ(length, strlen(msg));
     
     // Remaining bytes should be payload
@@ -48,7 +48,7 @@ TEST(length_prefix_decode) {
     
     // Create framed input
     uint8_t input[128];
-    uint32_t length = htonl(strlen(msg));
+    uint32_t length = federated::core::hton32(strlen(msg));
     memcpy(input, &length, 4);
     memcpy(input + 4, msg, strlen(msg));
     Buffer in_buf(input, strlen(msg) + 4);
@@ -101,6 +101,6 @@ TEST(length_prefix_empty_payload) {
     // Verify length is 0
     uint32_t length;
     memcpy(&length, output, 4);
-    length = ntohl(length);
+    length = federated::core::ntoh32(length);
     TEST_ASSERT_EQ(length, 0);
 }
