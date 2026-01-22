@@ -92,3 +92,12 @@ target_link_libraries(federated_tests
 # Enable testing
 enable_testing()
 add_test(NAME AllTests COMMAND federated_tests)
+
+# Examples
+add_executable(simple_message examples/simple_message.cpp)
+target_link_libraries(simple_message
+    federated_core
+    federated_transport
+    federated_framer
+    federated_crypto
+)
