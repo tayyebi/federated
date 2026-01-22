@@ -27,3 +27,4 @@ Makefile
 
 # Test outputs
 Testing/
+_codeql_*
