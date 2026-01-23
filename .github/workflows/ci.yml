@@ -33,3 +33,12 @@ jobs:
       run: |
         cd build
         ctest --output-on-failure
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: binaries-${{ matrix.os }}
+        path: |
+          build/federated_tests
+          build/simple_message
+        retention-days: 30

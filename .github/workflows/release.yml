@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: macos-latest
+            platform: macos
+            arch: x64
+          - os: windows-latest
+            platform: windows
+            arch: x64
+        
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      
+    - name: Build
+      run: cmake --build build --config Release
+    
+    - name: Prepare Binaries (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        cp federated_tests federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
+        cp simple_message simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+        
+    - name: Prepare Binaries (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        cd build/Release
+        copy federated_tests.exe federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        copy simple_message.exe simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        
+    - name: Compress Binaries (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        tar -czf federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
+        tar -czf simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+        
+    - name: Compress Binaries (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        cd build/Release
+        Compress-Archive -Path federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.zip
+        Compress-Archive -Path simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath simple_message-${{ matrix.platform }}-${{ matrix.arch }}.zip
+        
+    - name: Upload Release Assets (Linux/macOS)
+      if: runner.os != 'Windows'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          build/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          build/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
+          build/simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+        body: |
+          ## Release ${{ github.ref_name }}
+          
+          ### Supported Platforms
+          - Linux (x64)
+          - macOS (x64)
+          - Windows (x64)
+          
+          ### Available Binaries
+          - `federated_tests` - Test suite binary
+          - `simple_message` - Example application
+          
+          ### Download Instructions
+          
+          **Linux/macOS:**
+          ```bash
+          # Download and extract
+          wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          tar -xzf simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          chmod +x simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          ./simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          
+          # Or download uncompressed
+          wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          chmod +x simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          ./simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          ```
+          
+          **Windows:**
+          Download the `.zip` file or `.exe` directly and run.
+        
+    - name: Upload Release Assets (Windows)
+      if: runner.os == 'Windows'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/Release/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          build/Release/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          build/Release/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe
+          build/Release/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        body: |
+          ## Release ${{ github.ref_name }}
+          
+          ### Supported Platforms
+          - Linux (x64)
+          - macOS (x64)
+          - Windows (x64)
+          
+          ### Available Binaries
+          - `federated_tests` - Test suite binary
+          - `simple_message` - Example application
+          
+          ### Download Instructions
+          
+          **Linux/macOS:**
+          ```bash
+          # Download and extract
+          wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          tar -xzf simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          chmod +x simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          ./simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          
+          # Or download uncompressed
+          wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          chmod +x simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          ./simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          ```
+          
+          **Windows:**
+          Download the `.zip` file or `.exe` directly and run.
