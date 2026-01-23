@@ -86,6 +86,7 @@ target_link_libraries(federated_service
 add_library(federated_tool
     src/tool/cli.cpp
     src/tool/cli_commands.cpp
+    src/tool/log.cpp
 )
 
 target_include_directories(federated_tool PUBLIC
@@ -148,4 +149,11 @@ target_link_libraries(federated
     federated_crypto
     federated_service
     federated_tool
+)
+
+# Log demo executable
+add_executable(log_demo examples/log_demo.cpp)
+target_link_libraries(log_demo
+    federated_tool
+    federated_core
 )

@@ -1,4 +1,5 @@
 #include "federated/tool/cli.h"
+#include "federated/tool/log.h"
 #include "federated/service/smtp.h"
 #include "federated/service/imap.h"
 #include "federated/service/mail.h"
@@ -11,70 +12,70 @@ namespace cli {
 
 // Service handlers
 static core::ErrorCode smtp_service_start(const char* /* config_file */) {
-    printf("Starting SMTP service...\n");
+    LOG_HEADER("Starting SMTP Service");
     
     const char* port = get_option_value("port");
     const char* host = get_option_value("host");
     
-    printf("  Host: %s\n", host ? host : "0.0.0.0");
-    printf("  Port: %s\n", port ? port : "25");
+    LOG_INFO("Bind address: %s", host ? host : "0.0.0.0");
+    LOG_INFO("Port: %s", port ? port : "25");
     
     // Initialize mail store
     service::MailStore* store = service::get_mail_store();
     core::ErrorCode err = store->init();
     if (err != core::OK) {
-        fprintf(stderr, "Failed to initialize mail store\n");
+        LOG_ERROR("Failed to initialize mail store");
         return err;
     }
     
-    printf("SMTP service started successfully\n");
+    LOG_INFO("SMTP service started successfully");
     return core::OK;
 }
 
 static core::ErrorCode smtp_service_stop() {
-    printf("Stopping SMTP service...\n");
+    LOG_INFO("Stopping SMTP service...");
     service::MailStore* store = service::get_mail_store();
     store->cleanup();
-    printf("SMTP service stopped\n");
+    LOG_INFO("SMTP service stopped");
     return core::OK;
 }
 
 static core::ErrorCode smtp_service_status() {
-    printf("SMTP service status: running\n");
+    LOG_INFO("SMTP service status: running");
     return core::OK;
 }
 
 static core::ErrorCode imap_service_start(const char* /* config_file */) {
-    printf("Starting IMAP service...\n");
+    LOG_HEADER("Starting IMAP Service");
     
     const char* port = get_option_value("port");
     const char* host = get_option_value("host");
     
-    printf("  Host: %s\n", host ? host : "0.0.0.0");
-    printf("  Port: %s\n", port ? port : "143");
+    LOG_INFO("Bind address: %s", host ? host : "0.0.0.0");
+    LOG_INFO("Port: %s", port ? port : "143");
     
     // Initialize mail store
     service::MailStore* store = service::get_mail_store();
     core::ErrorCode err = store->init();
     if (err != core::OK) {
-        fprintf(stderr, "Failed to initialize mail store\n");
+        LOG_ERROR("Failed to initialize mail store");
         return err;
     }
     
-    printf("IMAP service started successfully\n");
+    LOG_INFO("IMAP service started successfully");
     return core::OK;
 }
 
 static core::ErrorCode imap_service_stop() {
-    printf("Stopping IMAP service...\n");
+    LOG_INFO("Stopping IMAP service...");
     service::MailStore* store = service::get_mail_store();
     store->cleanup();
-    printf("IMAP service stopped\n");
+    LOG_INFO("IMAP service stopped");
     return core::OK;
 }
 
 static core::ErrorCode imap_service_status() {
-    printf("IMAP service status: running\n");
+    LOG_INFO("IMAP service status: running");
     return core::OK;
 }
 
@@ -205,7 +206,25 @@ void init_cli() {
     service_cmd.options[3].type = OPT_STRING;
     service_cmd.options[3].description = "Environment file (.env format)";
     
-    service_cmd.option_count = 4;
+    service_cmd.options[4].name = "log-level";
+    service_cmd.options[4].short_name = 'l';
+    service_cmd.options[4].type = OPT_STRING;
+    service_cmd.options[4].description = "Log level (error, warn, info, debug, trace)";
+    service_cmd.options[4].default_value = "info";
+    service_cmd.options[4].env_var = "FEDERATED_LOG_LEVEL";
+    
+    service_cmd.options[5].name = "log-file";
+    service_cmd.options[5].short_name = 'L';
+    service_cmd.options[5].type = OPT_STRING;
+    service_cmd.options[5].description = "Log file path";
+    service_cmd.options[5].env_var = "FEDERATED_LOG_FILE";
+    
+    service_cmd.options[6].name = "no-color";
+    service_cmd.options[6].short_name = '\0';
+    service_cmd.options[6].type = OPT_FLAG;
+    service_cmd.options[6].description = "Disable colored output";
+    
+    service_cmd.option_count = 7;
     register_command(service_cmd);
     
     // Register version command
