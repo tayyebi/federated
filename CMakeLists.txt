@@ -82,6 +82,21 @@ target_link_libraries(federated_service
     federated_core
 )
 
+# Tool library (CLI framework)
+add_library(federated_tool
+    src/tool/cli.cpp
+    src/tool/cli_commands.cpp
+)
+
+target_include_directories(federated_tool PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_tool
+    federated_core
+    federated_service
+)
+
 # Test executable
 add_executable(federated_tests
     tests/test_runner.cpp
@@ -122,4 +137,15 @@ target_link_libraries(simple_message
     federated_transport
     federated_framer
     federated_crypto
+)
+
+# CLI executable
+add_executable(federated src/tool/cli_main.cpp)
+target_link_libraries(federated
+    federated_core
+    federated_transport
+    federated_framer
+    federated_crypto
+    federated_service
+    federated_tool
 )
