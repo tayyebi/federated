@@ -14,6 +14,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: ubuntu
+          - os: macos-latest
+            platform: macos
         
     steps:
     - uses: actions/checkout@v3
@@ -42,7 +47,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: binaries-${{ matrix.os }}
+        name: binaries-${{ matrix.platform }}
         path: |
           build/federated_tests
           build/simple_message

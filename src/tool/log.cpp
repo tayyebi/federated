@@ -2,8 +2,14 @@
 #include <cstdarg>
 #include <cstring>
 #include <ctime>
-#include <sys/ioctl.h>
-#include <unistd.h>
+
+// Platform-specific includes for terminal width detection
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <sys/ioctl.h>
+    #include <unistd.h>
+#endif
 
 namespace federated {
 namespace tool {
@@ -47,11 +53,21 @@ void log_set_color(bool enabled) {
 }
 
 int get_terminal_width() {
+#ifdef _WIN32
+    // Windows implementation using console API
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+        return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    }
+    return 80; // Default width
+#else
+    // POSIX implementation using ioctl
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
         return w.ws_col;
     }
     return 80; // Default width
+#endif
 }
 
 // Get current timestamp
@@ -247,49 +263,74 @@ void log_header(const char* text) {
     
     int width = get_terminal_width();
     int text_len = strlen(text);
-    int padding = (width - text_len - 4) / 2; // 4 for "=  ="
-    if (padding < 0) padding = 0;
     
-    // Build header line
+    // Build header line with bounds checking
     char header[512];
-    char* p = header;
+    const size_t header_size = sizeof(header);
+    size_t pos = 0;
+    
+    // Helper macro to safely append to header buffer
+    #define SAFE_APPEND(str) do { \
+        size_t len = strlen(str); \
+        if (pos + len < header_size - 1) { \
+            strcpy(header + pos, str); \
+            pos += len; \
+        } \
+    } while(0)
+    
+    #define SAFE_APPEND_CHAR(c) do { \
+        if (pos < header_size - 1) { \
+            header[pos++] = c; \
+        } \
+    } while(0)
     
     // Background color
     if (g_config.use_color) {
-        strcpy(p, color::BG_LIGHT_GRAY);
-        p += strlen(color::BG_LIGHT_GRAY);
-        strcpy(p, color::BLACK);
-        p += strlen(color::BLACK);
-        strcpy(p, color::BOLD);
-        p += strlen(color::BOLD);
+        SAFE_APPEND(color::BG_LIGHT_GRAY);
+        SAFE_APPEND(color::BLACK);
+        SAFE_APPEND(color::BOLD);
+    }
+    
+    // Calculate padding, ensuring we don't exceed buffer
+    int padding = (width - text_len - 4) / 2; // 4 for "=  ="
+    if (padding < 0) padding = 0;
+    
+    // Clamp width to prevent buffer overflow
+    // Account for: padding + "= " + text + " =" + padding + ANSI codes (max ~50) + null
+    int max_safe_width = header_size - 100; // Conservative limit
+    if (width > max_safe_width) {
+        width = max_safe_width;
+        padding = (width - text_len - 4) / 2;
+        if (padding < 0) padding = 0;
     }
     
     // Left padding
-    for (int i = 0; i < padding; i++) {
-        *p++ = ' ';
+    for (int i = 0; i < padding && pos < header_size - 1; i++) {
+        SAFE_APPEND_CHAR(' ');
     }
     
     // Text with borders
-    *p++ = '=';
-    *p++ = ' ';
-    strcpy(p, text);
-    p += text_len;
-    *p++ = ' ';
-    *p++ = '=';
+    SAFE_APPEND_CHAR('=');
+    SAFE_APPEND_CHAR(' ');
+    SAFE_APPEND(text);
+    SAFE_APPEND_CHAR(' ');
+    SAFE_APPEND_CHAR('=');
     
     // Right padding to fill width
     int current_len = padding + text_len + 4;
-    for (int i = current_len; i < width; i++) {
-        *p++ = ' ';
+    for (int i = current_len; i < width && pos < header_size - 1; i++) {
+        SAFE_APPEND_CHAR(' ');
     }
     
     // Reset color
     if (g_config.use_color) {
-        strcpy(p, color::RESET);
-        p += strlen(color::RESET);
+        SAFE_APPEND(color::RESET);
     }
     
-    *p = '\0';
+    header[pos] = '\0';
+    
+    #undef SAFE_APPEND
+    #undef SAFE_APPEND_CHAR
     
     fprintf(stdout, "%s\n", header);
     fflush(stdout);
