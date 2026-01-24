@@ -67,11 +67,12 @@ target_link_libraries(federated_crypto
     federated_core
 )
 
-# Service library (email subsystem)
+# Service library (email + HTTP subsystem)
 add_library(federated_service
     src/service/mail.cpp
     src/service/smtp.cpp
     src/service/imap.cpp
+    src/service/http.cpp
 )
 
 target_include_directories(federated_service PUBLIC
@@ -114,6 +115,7 @@ add_executable(federated_tests
     tests/service/test_mail.cpp
     tests/service/test_smtp.cpp
     tests/service/test_imap.cpp
+    tests/service/test_http.cpp
     tests/scenarios/scenario_file_transfer.cpp
     tests/scenarios/scenario_end_to_end_crypto.cpp
     tests/scenarios/scenario_store_and_forward.cpp

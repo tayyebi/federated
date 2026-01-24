@@ -3,8 +3,10 @@
 #include "federated/service/smtp.h"
 #include "federated/service/imap.h"
 #include "federated/service/mail.h"
+#include "federated/service/http.h"
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 
 namespace federated {
 namespace tool {
@@ -76,6 +78,46 @@ static core::ErrorCode imap_service_stop() {
 
 static core::ErrorCode imap_service_status() {
     LOG_INFO("IMAP service status: running");
+    return core::OK;
+}
+
+// HTTP service handlers
+static core::ErrorCode http_service_start(const char* /* config_file */) {
+    LOG_HEADER("Starting HTTP Service");
+    
+    const char* port = get_option_value("port");
+    const char* host = get_option_value("host");
+    const char* doc_root = get_option_value("document-root");
+    
+    LOG_INFO("Bind address: %s", host ? host : "0.0.0.0");
+    LOG_INFO("Port: %s", port ? port : "8080");
+    LOG_INFO("Document root: %s", doc_root ? doc_root : "./public");
+    
+    // Initialize HTTP server
+    service::HttpServerConfig config;
+    strncpy(config.document_root, doc_root ? doc_root : "./public", sizeof(config.document_root) - 1);
+    config.port = port ? atoi(port) : 8080;
+    config.allow_directory_listing = false;
+    
+    core::ErrorCode err = service::http_server_init(config);
+    if (err != core::OK) {
+        LOG_ERROR("Failed to initialize HTTP server");
+        return err;
+    }
+    
+    LOG_INFO("HTTP service started successfully");
+    return core::OK;
+}
+
+static core::ErrorCode http_service_stop() {
+    LOG_INFO("Stopping HTTP service...");
+    service::http_server_cleanup();
+    LOG_INFO("HTTP service stopped");
+    return core::OK;
+}
+
+static core::ErrorCode http_service_status() {
+    LOG_INFO("HTTP service status: running");
     return core::OK;
 }
 
@@ -329,6 +371,38 @@ void init_cli() {
     
     imap_svc.option_count = 2;
     register_service(imap_svc);
+    
+    // Register HTTP service
+    ServiceDef http_svc;
+    http_svc.name = "http";
+    http_svc.description = "HTTP static file server (RFC 7230-7235)";
+    http_svc.start = http_service_start;
+    http_svc.stop = http_service_stop;
+    http_svc.status = http_service_status;
+    
+    http_svc.options[0].name = "port";
+    http_svc.options[0].short_name = 'p';
+    http_svc.options[0].type = OPT_INT;
+    http_svc.options[0].description = "HTTP port";
+    http_svc.options[0].default_value = "8080";
+    http_svc.options[0].env_var = "FEDERATED_HTTP_PORT";
+    
+    http_svc.options[1].name = "host";
+    http_svc.options[1].short_name = 'h';
+    http_svc.options[1].type = OPT_STRING;
+    http_svc.options[1].description = "Bind address";
+    http_svc.options[1].default_value = "0.0.0.0";
+    http_svc.options[1].env_var = "FEDERATED_HTTP_HOST";
+    
+    http_svc.options[2].name = "document-root";
+    http_svc.options[2].short_name = 'd';
+    http_svc.options[2].type = OPT_STRING;
+    http_svc.options[2].description = "Document root directory";
+    http_svc.options[2].default_value = "./public";
+    http_svc.options[2].env_var = "FEDERATED_HTTP_DOC_ROOT";
+    
+    http_svc.option_count = 3;
+    register_service(http_svc);
 }
 
 } // namespace cli
