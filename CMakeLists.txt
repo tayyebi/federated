@@ -67,6 +67,38 @@ target_link_libraries(federated_crypto
     federated_core
 )
 
+# Service library (email + HTTP subsystem)
+add_library(federated_service
+    src/service/mail.cpp
+    src/service/smtp.cpp
+    src/service/imap.cpp
+    src/service/http.cpp
+)
+
+target_include_directories(federated_service PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_service
+    federated_core
+)
+
+# Tool library (CLI framework)
+add_library(federated_tool
+    src/tool/cli.cpp
+    src/tool/cli_commands.cpp
+    src/tool/log.cpp
+)
+
+target_include_directories(federated_tool PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_tool
+    federated_core
+    federated_service
+)
+
 # Test executable
 add_executable(federated_tests
     tests/test_runner.cpp
@@ -80,6 +112,10 @@ add_executable(federated_tests
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
     tests/crypto/test_none.cpp
+    tests/service/test_mail.cpp
+    tests/service/test_smtp.cpp
+    tests/service/test_imap.cpp
+    tests/service/test_http.cpp
     tests/scenarios/scenario_file_transfer.cpp
     tests/scenarios/scenario_end_to_end_crypto.cpp
     tests/scenarios/scenario_store_and_forward.cpp
@@ -90,6 +126,7 @@ target_link_libraries(federated_tests
     federated_transport
     federated_framer
     federated_crypto
+    federated_service
 )
 
 # Enable testing
@@ -103,4 +140,22 @@ target_link_libraries(simple_message
     federated_transport
     federated_framer
     federated_crypto
+)
+
+# CLI executable
+add_executable(federated src/tool/cli_main.cpp)
+target_link_libraries(federated
+    federated_core
+    federated_transport
+    federated_framer
+    federated_crypto
+    federated_service
+    federated_tool
+)
+
+# Log demo executable
+add_executable(log_demo examples/log_demo.cpp)
+target_link_libraries(log_demo
+    federated_tool
+    federated_core
 )

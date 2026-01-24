@@ -14,6 +14,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: ubuntu
+          - os: macos-latest
+            platform: macos
         
     steps:
     - uses: actions/checkout@v3
@@ -33,3 +38,18 @@ jobs:
       run: |
         cd build
         ctest --output-on-failure
+    
+    - name: Run E2E Tests
+      run: |
+        chmod +x tests/e2e/*.sh
+        ./tests/e2e/run_all.sh
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: binaries-${{ matrix.platform }}
+        path: |
+          build/federated_tests
+          build/simple_message
+          build/federated
+        retention-days: 30

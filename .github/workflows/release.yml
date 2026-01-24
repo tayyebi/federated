@@ -1,0 +1,139 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # Job 1: Build binaries on all platforms and upload as artifacts
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: macos-latest
+            platform: macos
+            arch: x64
+          - os: windows-latest
+            platform: windows
+            arch: x64
+        
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      
+    - name: Build
+      run: cmake --build build --config Release
+    
+    - name: Prepare Binaries (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        cp federated_tests federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
+        cp simple_message simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+        cp federated federated-${{ matrix.platform }}-${{ matrix.arch }}
+        
+    - name: Prepare Binaries (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        cd build/Release
+        copy federated_tests.exe federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        copy simple_message.exe simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        copy federated.exe federated-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        
+    - name: Compress Binaries (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        tar -czf federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
+        tar -czf simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+        tar -czf federated-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz federated-${{ matrix.platform }}-${{ matrix.arch }}
+        
+    - name: Compress Binaries (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        cd build/Release
+        Compress-Archive -Path federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.zip
+        Compress-Archive -Path simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath simple_message-${{ matrix.platform }}-${{ matrix.arch }}.zip
+        Compress-Archive -Path federated-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath federated-${{ matrix.platform }}-${{ matrix.arch }}.zip
+    
+    - name: Upload Build Artifacts (Linux/macOS)
+      if: runner.os != 'Windows'
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-${{ matrix.platform }}
+        path: |
+          build/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          build/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          build/federated-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          build/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
+          build/simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          build/federated-${{ matrix.platform }}-${{ matrix.arch }}
+        retention-days: 1
+    
+    - name: Upload Build Artifacts (Windows)
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-${{ matrix.platform }}
+        path: |
+          build/Release/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          build/Release/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          build/Release/federated-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          build/Release/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe
+          build/Release/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe
+          build/Release/federated-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        retention-days: 1
+
+  # Job 2: Create release and upload all artifacts (runs after all builds complete)
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+    
+    - name: Display Structure
+      run: ls -R artifacts
+    
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/release-linux/*
+          artifacts/release-macos/*
+          artifacts/release-windows/*
+        body: |
+          ## Release ${{ github.ref_name }}
+          
+          ### Supported Platforms
+          - Linux (x64)
+          - macOS (x64)
+          - Windows (x64)
+          
+          ### Available Binaries
+          - `federated_tests` - Test suite binary
+          - `simple_message` - Example application
+          - `federated` - Main CLI tool
+          
+          ### Download
+          Choose the appropriate binary for your platform:
+          - Linux: `*-linux-x64` or `*-linux-x64.tar.gz`
+          - macOS: `*-macos-x64` or `*-macos-x64.tar.gz`
+          - Windows: `*-windows-x64.exe` or `*-windows-x64.zip`
+          
+          Compressed versions (.tar.gz, .zip) are provided for convenience.
