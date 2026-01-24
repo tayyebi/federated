@@ -189,7 +189,8 @@ const char* get_option_value(const char* name) {
             if (strcmp(opt.name, name) == 0 && opt.env_var) {
                 value = get_env_var(opt.env_var);
                 if (value) return value;
-                return opt.default_value;
+                // Only return default if non-null; otherwise continue searching
+                if (opt.default_value) return opt.default_value;
             }
         }
     }
@@ -201,7 +202,8 @@ const char* get_option_value(const char* name) {
             if (strcmp(opt.name, name) == 0 && opt.env_var) {
                 value = get_env_var(opt.env_var);
                 if (value) return value;
-                return opt.default_value;
+                // Only return default if non-null; otherwise continue searching
+                if (opt.default_value) return opt.default_value;
             }
         }
     }
