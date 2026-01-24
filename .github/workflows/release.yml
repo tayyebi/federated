@@ -39,6 +39,7 @@ jobs:
         cd build
         cp federated_tests federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
         cp simple_message simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+        cp federated federated-${{ matrix.platform }}-${{ matrix.arch }}
         
     - name: Prepare Binaries (Windows)
       if: runner.os == 'Windows'
@@ -46,6 +47,7 @@ jobs:
         cd build/Release
         copy federated_tests.exe federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe
         copy simple_message.exe simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe
+        copy federated.exe federated-${{ matrix.platform }}-${{ matrix.arch }}.exe
         
     - name: Compress Binaries (Linux/macOS)
       if: runner.os != 'Windows'
@@ -53,6 +55,7 @@ jobs:
         cd build
         tar -czf federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
         tar -czf simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+        tar -czf federated-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz federated-${{ matrix.platform }}-${{ matrix.arch }}
         
     - name: Compress Binaries (Windows)
       if: runner.os == 'Windows'
@@ -60,6 +63,7 @@ jobs:
         cd build/Release
         Compress-Archive -Path federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.zip
         Compress-Archive -Path simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath simple_message-${{ matrix.platform }}-${{ matrix.arch }}.zip
+        Compress-Archive -Path federated-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath federated-${{ matrix.platform }}-${{ matrix.arch }}.zip
         
     - name: Upload Release Assets (Linux/macOS)
       if: runner.os != 'Windows'
@@ -68,8 +72,10 @@ jobs:
         files: |
           build/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
           build/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+          build/federated-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
           build/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}
           build/simple_message-${{ matrix.platform }}-${{ matrix.arch }}
+          build/federated-${{ matrix.platform }}-${{ matrix.arch }}
         body: |
           ## Release ${{ github.ref_name }}
           
@@ -108,8 +114,10 @@ jobs:
         files: |
           build/Release/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.zip
           build/Release/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          build/Release/federated-${{ matrix.platform }}-${{ matrix.arch }}.zip
           build/Release/federated_tests-${{ matrix.platform }}-${{ matrix.arch }}.exe
           build/Release/simple_message-${{ matrix.platform }}-${{ matrix.arch }}.exe
+          build/Release/federated-${{ matrix.platform }}-${{ matrix.arch }}.exe
         body: |
           ## Release ${{ github.ref_name }}
           
