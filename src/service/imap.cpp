@@ -98,7 +98,17 @@ core::ErrorCode imap_server_process_command(ImapSession& session,
     }
     
     if (str_eq(cmd.name, "LOGIN")) {
-        return imap_handle_login(session, "", "", response, response_size);
+        // Parse LOGIN username password
+        char username[64] = {0};
+        char password[64] = {0};
+        
+        // Simple parsing: LOGIN user pass
+        if (sscanf(cmd.args, "%63s %63s", username, password) != 2) {
+            snprintf(response, response_size, "%s BAD Invalid LOGIN syntax\r\n", cmd.tag);
+            return core::OK;
+        }
+        
+        return imap_handle_login(session, username, password, cmd.tag, response, response_size);
     }
     
     if (str_eq(cmd.name, "LIST")) {
@@ -106,7 +116,7 @@ core::ErrorCode imap_server_process_command(ImapSession& session,
             snprintf(response, response_size, "%s BAD Not authenticated\r\n", cmd.tag);
             return core::OK;
         }
-        return imap_handle_list(session, response, response_size);
+        return imap_handle_list(session, cmd.tag, response, response_size);
     }
     
     if (str_eq(cmd.name, "SELECT")) {
@@ -114,7 +124,7 @@ core::ErrorCode imap_server_process_command(ImapSession& session,
             snprintf(response, response_size, "%s BAD Not authenticated\r\n", cmd.tag);
             return core::OK;
         }
-        return imap_handle_select(session, cmd.args, response, response_size);
+        return imap_handle_select(session, cmd.args, cmd.tag, response, response_size);
     }
     
     if (str_eq(cmd.name, "FETCH")) {
@@ -123,7 +133,7 @@ core::ErrorCode imap_server_process_command(ImapSession& session,
             return core::OK;
         }
         // Parse sequence and items from args
-        return imap_handle_fetch(session, "1", "BODY[]", response, response_size);
+        return imap_handle_fetch(session, "1", "BODY[]", cmd.tag, response, response_size);
     }
     
     if (str_eq(cmd.name, "LOGOUT")) {
@@ -142,17 +152,19 @@ core::ErrorCode imap_server_process_command(ImapSession& session,
 core::ErrorCode imap_handle_login(ImapSession& session,
                                   const char* username,
                                   const char* /* password */,
+                                  const char* tag,
                                   char* response,
                                   size_t response_size) {
     strncpy(session.username, username, 63);
     session.username[63] = '\0';
     session.state = IMAP_AUTH;
-    snprintf(response, response_size, "A001 OK LOGIN completed\r\n");
+    snprintf(response, response_size, "%s OK LOGIN completed\r\n", tag);
     return core::OK;
 }
 
 // Handle LIST
 core::ErrorCode imap_handle_list(ImapSession& /* session */,
+                                 const char* tag,
                                  char* response,
                                  size_t response_size) {
     snprintf(response, response_size,
@@ -160,13 +172,14 @@ core::ErrorCode imap_handle_list(ImapSession& /* session */,
             "* LIST () \"/\" SENT\r\n"
             "* LIST () \"/\" OUTBOX\r\n"
             "* LIST () \"/\" QUEUE\r\n"
-            "A002 OK LIST completed\r\n");
+            "%s OK LIST completed\r\n", tag);
     return core::OK;
 }
 
 // Handle SELECT
 core::ErrorCode imap_handle_select(ImapSession& session,
                                    const char* mailbox,
+                                   const char* tag,
                                    char* response,
                                    size_t response_size) {
     strncpy(session.selected_mailbox, mailbox, 63);
@@ -183,8 +196,8 @@ core::ErrorCode imap_handle_select(ImapSession& session,
             "* %zu EXISTS\r\n"
             "* 0 RECENT\r\n"
             "* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n"
-            "A003 OK [READ-WRITE] SELECT completed\r\n",
-            count);
+            "%s OK [READ-WRITE] SELECT completed\r\n",
+            count, tag);
     return core::OK;
 }
 
@@ -192,6 +205,7 @@ core::ErrorCode imap_handle_select(ImapSession& session,
 core::ErrorCode imap_handle_fetch(ImapSession& session,
                                   const char* /* sequence */,
                                   const char* /* items */,
+                                  const char* tag,
                                   char* response,
                                   size_t response_size) {
     MailStore* store = get_mail_store();
@@ -200,17 +214,18 @@ core::ErrorCode imap_handle_fetch(ImapSession& session,
     store->list(session.selected_mailbox, msgs, &count);
     
     if (count == 0) {
-        snprintf(response, response_size, "A004 OK FETCH completed\r\n");
+        snprintf(response, response_size, "%s OK FETCH completed\r\n", tag);
         return core::OK;
     }
     
     // For now, just return first message info
     snprintf(response, response_size,
             "* 1 FETCH (BODY[] {%zu}\r\n%.*s)\r\n"
-            "A004 OK FETCH completed\r\n",
+            "%s OK FETCH completed\r\n",
             msgs[0].body.size,
             (int)msgs[0].body.size,
-            msgs[0].body.data ? (char*)msgs[0].body.data : "");
+            msgs[0].body.data ? (char*)msgs[0].body.data : "",
+            tag);
     return core::OK;
 }
 

@@ -44,7 +44,10 @@ static bool initialized = false;
 static void generate_message_id(char* id, size_t size) {
     static uint64_t counter = 0;
     uint64_t timestamp = static_cast<uint64_t>(time(nullptr));
-    snprintf(id, size, "%lu-%lu", timestamp, counter++);
+    // Use %llu for uint64_t to ensure portability across platforms
+    snprintf(id, size, "%llu-%llu", 
+             (unsigned long long)timestamp, 
+             (unsigned long long)counter++);
 }
 
 static core::ErrorCode mail_store_init() {

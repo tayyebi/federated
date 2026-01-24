@@ -162,7 +162,9 @@ core::ErrorCode smtp_client_send(const char* /* server */,
                                 const MailMessage& msg,
                                 bool* sent) {
     // For now, just queue it
-    *sent = false;
+    if (sent) {
+        *sent = false;
+    }
     return smtp_client_queue(msg);
 }
 

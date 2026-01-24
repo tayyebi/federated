@@ -76,17 +76,20 @@ core::ErrorCode imap_server_process_command(ImapSession& session,
 core::ErrorCode imap_handle_login(ImapSession& session,
                                   const char* username,
                                   const char* password,
+                                  const char* tag,
                                   char* response,
                                   size_t response_size);
 
 // IMAP Server - Handle LIST
 core::ErrorCode imap_handle_list(ImapSession& session,
+                                 const char* tag,
                                  char* response,
                                  size_t response_size);
 
 // IMAP Server - Handle SELECT
 core::ErrorCode imap_handle_select(ImapSession& session,
                                    const char* mailbox,
+                                   const char* tag,
                                    char* response,
                                    size_t response_size);
 
@@ -94,6 +97,7 @@ core::ErrorCode imap_handle_select(ImapSession& session,
 core::ErrorCode imap_handle_fetch(ImapSession& session,
                                   const char* sequence,
                                   const char* items,
+                                  const char* tag,
                                   char* response,
                                   size_t response_size);
 
