@@ -7,10 +7,56 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <csignal>
+#include <atomic>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 namespace federated {
 namespace tool {
 namespace cli {
+
+// Global flag for signal handling
+static std::atomic<bool> g_service_running{false};
+
+// Signal handler for graceful shutdown
+static void signal_handler(int signal) {
+    if (signal == SIGINT || signal == SIGTERM) {
+        LOG_INFO("Received shutdown signal (%d)", signal);
+        g_service_running.store(false);
+    }
+}
+
+// Portable sleep function (1 second)
+static void sleep_one_second() {
+#ifdef _WIN32
+    Sleep(1000);
+#else
+    sleep(1);
+#endif
+}
+
+// Service event loop - blocks until signal received
+static void run_service_loop() {
+    g_service_running.store(true);
+    
+    // Install signal handlers
+    std::signal(SIGINT, signal_handler);
+    std::signal(SIGTERM, signal_handler);
+    
+    LOG_INFO("Service running (press Ctrl+C to stop)");
+    
+    // Main service loop - just wait for termination signal
+    while (g_service_running.load()) {
+        sleep_one_second();
+    }
+    
+    LOG_INFO("Service loop terminated");
+}
 
 // Service handlers
 static core::ErrorCode smtp_service_start(const char* /* config_file */) {
@@ -31,6 +77,14 @@ static core::ErrorCode smtp_service_start(const char* /* config_file */) {
     }
     
     LOG_INFO("SMTP service started successfully");
+    
+    // Run the service loop (blocks until signal received)
+    run_service_loop();
+    
+    // Cleanup on exit
+    LOG_INFO("Cleaning up SMTP service...");
+    store->cleanup();
+    
     return core::OK;
 }
 
@@ -65,6 +119,14 @@ static core::ErrorCode imap_service_start(const char* /* config_file */) {
     }
     
     LOG_INFO("IMAP service started successfully");
+    
+    // Run the service loop (blocks until signal received)
+    run_service_loop();
+    
+    // Cleanup on exit
+    LOG_INFO("Cleaning up IMAP service...");
+    store->cleanup();
+    
     return core::OK;
 }
 
@@ -106,6 +168,14 @@ static core::ErrorCode http_service_start(const char* /* config_file */) {
     }
     
     LOG_INFO("HTTP service started successfully");
+    
+    // Run the service loop (blocks until signal received)
+    run_service_loop();
+    
+    // Cleanup on exit
+    LOG_INFO("Cleaning up HTTP service...");
+    service::http_server_cleanup();
+    
     return core::OK;
 }
 
