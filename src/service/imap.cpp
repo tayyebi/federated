@@ -1,3 +1,23 @@
+/**
+ * IMAP Protocol Implementation
+ * 
+ * RFC 3501 - Internet Message Access Protocol - Version 4rev1
+ * https://datatracker.ietf.org/doc/html/rfc3501
+ * 
+ * State Machine (Section 3):
+ * NOT AUTHENTICATED → AUTHENTICATED → SELECTED → LOGOUT
+ * 
+ * Commands Implemented:
+ * - CAPABILITY: List server capabilities (Section 6.1.1)
+ * - LOGIN: Authenticate user (Section 6.2.3)
+ * - LIST: List mailboxes (Section 6.3.8)
+ * - SELECT: Select mailbox (Section 6.3.1)
+ * - FETCH: Retrieve message data (Section 6.4.5)
+ * - LOGOUT: Close connection (Section 6.1.3)
+ * 
+ * Tag Handling: All responses include client-provided tags (Section 2.2.1)
+ */
+
 #include "federated/service/imap.h"
 #include "federated/service/mail.h"
 #include <cstring>

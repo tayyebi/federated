@@ -1,3 +1,19 @@
+/**
+ * Mail Storage Implementation
+ * 
+ * RFC 5322 - Internet Message Format
+ * https://datatracker.ietf.org/doc/html/rfc5322
+ * 
+ * Provides in-memory storage for email messages following RFC 5322 format.
+ * Supports standard mailboxes as defined by IMAP (RFC 3501):
+ * - INBOX: Incoming messages
+ * - SENT: Sent messages
+ * - OUTBOX: Messages pending send
+ * - QUEUE: Store-and-forward queue
+ * 
+ * Message IDs: Generated using timestamp + counter (Section 3.6.4)
+ */
+
 #include "federated/service/mail.h"
 #include <cstring>
 #include <cstdio>

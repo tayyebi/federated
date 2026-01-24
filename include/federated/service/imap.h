@@ -1,6 +1,28 @@
 #ifndef FEDERATED_SERVICE_IMAP_H
 #define FEDERATED_SERVICE_IMAP_H
 
+/**
+ * IMAP (Internet Message Access Protocol) Implementation
+ * 
+ * RFC References:
+ * - RFC 3501: Internet Message Access Protocol - Version 4rev1
+ *   https://datatracker.ietf.org/doc/html/rfc3501
+ *   Defines the protocol for accessing and managing email messages
+ * 
+ * This implementation provides:
+ * - IMAP4rev1 server functionality
+ * - State machine: NOT AUTHENTICATED → AUTHENTICATED → SELECTED → LOGOUT
+ *   (Section 3 of RFC 3501)
+ * - Core commands:
+ *   - CAPABILITY: Advertise server capabilities (Section 6.1.1)
+ *   - LOGIN: Authenticate user (Section 6.2.3)
+ *   - LIST: List available mailboxes (Section 6.3.8)
+ *   - SELECT: Select a mailbox (Section 6.3.1)
+ *   - FETCH: Retrieve message data (Section 6.4.5)
+ *   - LOGOUT: Close connection (Section 6.1.3)
+ * - Mailbox management: INBOX, SENT, OUTBOX, QUEUE
+ */
+
 #include "../core/buffer.h"
 #include "../core/error.h"
 #include "mail.h"

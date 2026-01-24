@@ -1,3 +1,21 @@
+/**
+ * SMTP Protocol Implementation
+ * 
+ * RFC 5321 - Simple Mail Transfer Protocol
+ * https://datatracker.ietf.org/doc/html/rfc5321
+ * 
+ * State Machine (Section 4.1.4):
+ * INIT → GREETED → MAIL → RCPT → DATA → DONE
+ * 
+ * Commands Implemented:
+ * - HELO/EHLO: Initiate session (Section 4.1.1.1)
+ * - MAIL FROM: Specify sender (Section 4.1.1.2)
+ * - RCPT TO: Specify recipient (Section 4.1.1.3)
+ * - DATA: Begin message transmission (Section 4.1.1.4)
+ * - RSET: Reset session (Section 4.1.1.5)
+ * - QUIT: End session (Section 4.1.1.10)
+ */
+
 #include "federated/service/smtp.h"
 #include "federated/service/mail.h"
 #include <cstring>

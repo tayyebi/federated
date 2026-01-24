@@ -1,6 +1,26 @@
 #ifndef FEDERATED_SERVICE_SMTP_H
 #define FEDERATED_SERVICE_SMTP_H
 
+/**
+ * SMTP (Simple Mail Transfer Protocol) Implementation
+ * 
+ * RFC References:
+ * - RFC 5321: Simple Mail Transfer Protocol (SMTP)
+ *   https://datatracker.ietf.org/doc/html/rfc5321
+ *   Defines the protocol for email transmission between mail servers
+ * 
+ * - RFC 5322: Internet Message Format
+ *   https://datatracker.ietf.org/doc/html/rfc5322
+ *   Defines the format of email messages (headers, body)
+ * 
+ * This implementation provides:
+ * - SMTP server: Receives mail from clients (Section 3 of RFC 5321)
+ * - SMTP client: Sends mail to servers (Section 4 of RFC 5321)
+ * - State machine validation (Section 4.1.4 of RFC 5321)
+ * - Command processing: HELO, EHLO, MAIL FROM, RCPT TO, DATA, RSET, QUIT
+ * - Store-and-forward for offline operation
+ */
+
 #include "../core/buffer.h"
 #include "../core/error.h"
 #include "mail.h"

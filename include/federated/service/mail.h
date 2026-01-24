@@ -1,6 +1,24 @@
 #ifndef FEDERATED_SERVICE_MAIL_H
 #define FEDERATED_SERVICE_MAIL_H
 
+/**
+ * Mail Storage and Message Data Structures
+ * 
+ * RFC References:
+ * - RFC 5322: Internet Message Format
+ *   https://datatracker.ietf.org/doc/html/rfc5322
+ *   Defines email message format (headers, body structure)
+ * 
+ * - RFC 2822: Internet Message Format (obsoleted by RFC 5322)
+ *   Historical reference for message format
+ * 
+ * This module provides:
+ * - MailMessage: Email message structure with RFC 5322 headers and body
+ * - Mailbox: Named storage locations (INBOX, SENT, OUTBOX, QUEUE)
+ * - MailStore: Interface for message storage and retrieval
+ * - CRUD operations: append, list, fetch, remove
+ */
+
 #include "../core/buffer.h"
 #include "../core/error.h"
 #include <cstdint>

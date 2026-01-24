@@ -145,6 +145,32 @@ static core::ErrorCode cmd_version_handler(int /* argc */, char** /* argv */) {
     return core::OK;
 }
 
+// Command: about
+static core::ErrorCode cmd_about_handler(int /* argc */, char** /* argv */) {
+    printf("Federated - Universal Resilient Communication Toolkit\n");
+    printf("Version: 0.1.0\n\n");
+    
+    printf("Description:\n");
+    printf("  A universal, resilient communication toolkit designed to operate\n");
+    printf("  across any available medium - digital, analog, or human-assisted -\n");
+    printf("  while remaining auditable, extensible, and survivable.\n\n");
+    
+    printf("Authors:\n");
+    printf("  - GitHub Copilot (@copilot)\n");
+    printf("  - Mostafa Tayyebi (@tayyebi)\n\n");
+    
+    printf("License:\n");
+    printf("  MIT License\n\n");
+    
+    printf("Repository:\n");
+    printf("  https://github.com/tayyebi/federated\n\n");
+    
+    printf("Documentation:\n");
+    printf("  See README.md and docs/ directory for detailed information\n");
+    
+    return core::OK;
+}
+
 // Command: help
 static core::ErrorCode cmd_help_handler(int /* argc */, char** /* argv */) {
     printf("Federated - Universal Resilient Communication Toolkit\n\n");
@@ -235,6 +261,15 @@ void init_cli() {
     version_cmd.handler = cmd_version_handler;
     version_cmd.option_count = 0;
     register_command(version_cmd);
+    
+    // Register about command
+    Command about_cmd;
+    about_cmd.name = "about";
+    about_cmd.description = "Show project information and authors";
+    about_cmd.usage = "federated about";
+    about_cmd.handler = cmd_about_handler;
+    about_cmd.option_count = 0;
+    register_command(about_cmd);
     
     // Register help command
     Command help_cmd;
