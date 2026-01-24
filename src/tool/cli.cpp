@@ -269,147 +269,130 @@ void generate_help(const Command& cmd, char* output, size_t output_size) {
     char* p = output;
     size_t remaining = output_size;
     
-    int written = snprintf(p, remaining, "Usage: %s\n\n", cmd.usage ? cmd.usage : cmd.name);
-    p += written; remaining -= written;
+    // Helper macro to safely write and update pointers
+    #define SAFE_SNPRINTF(...) do { \
+        int n = snprintf(p, remaining, __VA_ARGS__); \
+        if (n > 0 && (size_t)n < remaining) { \
+            p += n; \
+            remaining -= n; \
+        } else { \
+            remaining = 0; \
+        } \
+    } while(0)
+    
+    SAFE_SNPRINTF("Usage: %s\n\n", cmd.usage ? cmd.usage : cmd.name);
     
     if (cmd.description) {
-        written = snprintf(p, remaining, "%s\n\n", cmd.description);
-        p += written; remaining -= written;
+        SAFE_SNPRINTF("%s\n\n", cmd.description);
     }
     
     if (cmd.option_count > 0) {
-        written = snprintf(p, remaining, "Options:\n");
-        p += written; remaining -= written;
+        SAFE_SNPRINTF("Options:\n");
         
-        for (size_t i = 0; i < cmd.option_count; i++) {
+        for (size_t i = 0; i < cmd.option_count && remaining > 0; i++) {
             const Option& opt = cmd.options[i];
             
             if (opt.short_name) {
-                written = snprintf(p, remaining, "  -%c, --%-20s", opt.short_name, opt.name);
+                SAFE_SNPRINTF("  -%c, --%-20s", opt.short_name, opt.name);
             } else {
-                written = snprintf(p, remaining, "      --%-20s", opt.name);
+                SAFE_SNPRINTF("      --%-20s", opt.name);
             }
-            p += written; remaining -= written;
             
             if (opt.description) {
-                written = snprintf(p, remaining, " %s", opt.description);
-                p += written; remaining -= written;
+                SAFE_SNPRINTF(" %s", opt.description);
             }
             
             if (opt.default_value) {
-                written = snprintf(p, remaining, " (default: %s)", opt.default_value);
-                p += written; remaining -= written;
+                SAFE_SNPRINTF(" (default: %s)", opt.default_value);
             }
             
             if (opt.env_var) {
-                written = snprintf(p, remaining, " [env: %s]", opt.env_var);
-                p += written; remaining -= written;
+                SAFE_SNPRINTF(" [env: %s]", opt.env_var);
             }
             
             if (opt.required) {
-                written = snprintf(p, remaining, " [required]");
-                p += written; remaining -= written;
+                SAFE_SNPRINTF(" [required]");
             }
             
-            written = snprintf(p, remaining, "\n");
-            p += written; remaining -= written;
+            SAFE_SNPRINTF("\n");
         }
     }
+    
+    #undef SAFE_SNPRINTF
 }
 
 void generate_bash_completion(char* output, size_t output_size) {
     char* p = output;
     size_t remaining = output_size;
     
-    int written = snprintf(p, remaining, "# Bash completion for federated\n");
-    p += written; remaining -= written;
+    #define SAFE_SNPRINTF(...) do { \
+        int n = snprintf(p, remaining, __VA_ARGS__); \
+        if (n > 0 && (size_t)n < remaining) { \
+            p += n; \
+            remaining -= n; \
+        } else { \
+            remaining = 0; \
+        } \
+    } while(0)
     
-    written = snprintf(p, remaining, "_federated_completions() {\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "    local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "    local cmd=\"${COMP_WORDS[1]}\"\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "    \n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "    if [ $COMP_CWORD -eq 1 ]; then\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "        COMPREPLY=($(compgen -W \"");
-    p += written; remaining -= written;
+    SAFE_SNPRINTF("# Bash completion for federated\n");
+    SAFE_SNPRINTF("_federated_completions() {\n");
+    SAFE_SNPRINTF("    local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n");
+    SAFE_SNPRINTF("    local cmd=\"${COMP_WORDS[1]}\"\n");
+    SAFE_SNPRINTF("    \n");
+    SAFE_SNPRINTF("    if [ $COMP_CWORD -eq 1 ]; then\n");
+    SAFE_SNPRINTF("        COMPREPLY=($(compgen -W \"");
     
     CliRegistry* reg = get_cli_registry();
-    for (size_t i = 0; i < reg->command_count; i++) {
-        written = snprintf(p, remaining, "%s ", reg->commands[i].name);
-        p += written; remaining -= written;
+    for (size_t i = 0; i < reg->command_count && remaining > 0; i++) {
+        SAFE_SNPRINTF("%s ", reg->commands[i].name);
     }
     
-    written = snprintf(p, remaining, "\" -- \"$cur\"))\n");
-    p += written; remaining -= written;
+    SAFE_SNPRINTF("\" -- \"$cur\"))\n");
+    SAFE_SNPRINTF("    else\n");
+    SAFE_SNPRINTF("        COMPREPLY=($(compgen -W \"");
+    SAFE_SNPRINTF("--help --version --config --env-file ");
+    SAFE_SNPRINTF("\" -- \"$cur\"))\n");
+    SAFE_SNPRINTF("    fi\n");
+    SAFE_SNPRINTF("}\n\n");
+    SAFE_SNPRINTF("complete -F _federated_completions federated\n");
     
-    written = snprintf(p, remaining, "    else\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "        COMPREPLY=($(compgen -W \"");
-    p += written; remaining -= written;
-    
-    // Add common options
-    written = snprintf(p, remaining, "--help --version --config --env-file ");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "\" -- \"$cur\"))\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "    fi\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "}\n\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "complete -F _federated_completions federated\n");
-    p += written; remaining -= written;
+    #undef SAFE_SNPRINTF
 }
 
 void generate_zsh_completion(char* output, size_t output_size) {
     char* p = output;
     size_t remaining = output_size;
     
-    int written = snprintf(p, remaining, "#compdef federated\n\n");
-    p += written; remaining -= written;
+    #define SAFE_SNPRINTF(...) do { \
+        int n = snprintf(p, remaining, __VA_ARGS__); \
+        if (n > 0 && (size_t)n < remaining) { \
+            p += n; \
+            remaining -= n; \
+        } else { \
+            remaining = 0; \
+        } \
+    } while(0)
     
-    written = snprintf(p, remaining, "_federated() {\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "    local -a commands\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "    commands=(\n");
-    p += written; remaining -= written;
+    SAFE_SNPRINTF("#compdef federated\n\n");
+    SAFE_SNPRINTF("_federated() {\n");
+    SAFE_SNPRINTF("    local -a commands\n");
+    SAFE_SNPRINTF("    commands=(\n");
     
     CliRegistry* reg = get_cli_registry();
-    for (size_t i = 0; i < reg->command_count; i++) {
+    for (size_t i = 0; i < reg->command_count && remaining > 0; i++) {
         const Command& cmd = reg->commands[i];
-        written = snprintf(p, remaining, "        '%s:%s'\n", 
-                          cmd.name, 
-                          cmd.description ? cmd.description : "");
-        p += written; remaining -= written;
+        SAFE_SNPRINTF("        '%s:%s'\n", 
+                      cmd.name, 
+                      cmd.description ? cmd.description : "");
     }
     
-    written = snprintf(p, remaining, "    )\n");
-    p += written; remaining -= written;
+    SAFE_SNPRINTF("    )\n");
+    SAFE_SNPRINTF("    _describe 'command' commands\n");
+    SAFE_SNPRINTF("}\n\n");
+    SAFE_SNPRINTF("_federated\n");
     
-    written = snprintf(p, remaining, "    _describe 'command' commands\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "}\n\n");
-    p += written; remaining -= written;
-    
-    written = snprintf(p, remaining, "_federated\n");
-    p += written; remaining -= written;
+    #undef SAFE_SNPRINTF
 }
 
 int cli_main(int argc, char** argv) {
