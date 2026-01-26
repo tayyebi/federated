@@ -32,6 +32,10 @@ add_library(federated_transport
     src/transport/file.cpp
     src/transport/tcp.cpp
     src/transport/udp.cpp
+    src/transport/dns_tunnel.cpp
+    src/transport/bluetooth.cpp
+    src/transport/wifi_direct.cpp
+    src/transport/infrared.cpp
 )
 
 target_include_directories(federated_transport PUBLIC
@@ -67,6 +71,8 @@ target_link_libraries(federated_framer
 add_library(federated_crypto
     src/crypto/none.cpp
     src/crypto/xor_stream.cpp
+    src/crypto/chacha20.cpp
+    src/crypto/public_key.cpp
 )
 
 target_include_directories(federated_crypto PUBLIC
@@ -122,12 +128,14 @@ add_executable(federated_tests
     tests/transport/test_file.cpp
     tests/transport/test_tcp.cpp
     tests/transport/test_udp.cpp
+    tests/transport/test_dns_tunnel.cpp
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
     tests/framer/test_crc.cpp
     tests/framer/test_chunked.cpp
     tests/crypto/test_none.cpp
     tests/crypto/test_xor_stream.cpp
+    tests/crypto/test_chacha20.cpp
     tests/service/test_mail.cpp
     tests/service/test_smtp.cpp
     tests/service/test_imap.cpp
