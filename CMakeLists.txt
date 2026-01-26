@@ -32,6 +32,10 @@ add_library(federated_transport
     src/transport/file.cpp
     src/transport/tcp.cpp
     src/transport/udp.cpp
+    src/transport/dns_tunnel.cpp
+    src/transport/bluetooth.cpp
+    src/transport/wifi_direct.cpp
+    src/transport/infrared.cpp
 )
 
 target_include_directories(federated_transport PUBLIC
@@ -68,6 +72,7 @@ add_library(federated_crypto
     src/crypto/none.cpp
     src/crypto/xor_stream.cpp
     src/crypto/chacha20.cpp
+    src/crypto/public_key.cpp
 )
 
 target_include_directories(federated_crypto PUBLIC

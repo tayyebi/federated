@@ -45,6 +45,118 @@ ctest
 
 ---
 
+## Quick Start
+
+### Start HTTP Server
+```bash
+# Build the project first
+./build/federated
+
+# The HTTP server can be started programmatically or via CLI
+# Example: Serve static files from a directory
+# (Full CLI integration coming in Phase 4)
+```
+
+### Use TCP Transport
+```cpp
+#include "federated/transport/tcp.h"
+#include "federated/core/buffer.h"
+
+using namespace federated;
+
+// Get TCP transport instance
+transport::Transport* tcp = transport::TCPTransport::get_instance();
+
+// Open connection (creates loopback server for testing)
+tcp->open();
+
+// Send data
+const char* msg = "Hello, TCP!";
+core::Buffer send_buf(
+    const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(msg)),
+    strlen(msg)
+);
+tcp->send(send_buf);
+
+// Receive data
+uint8_t recv_data[1024];
+core::Buffer recv_buf(recv_data, sizeof(recv_data));
+tcp->recv(recv_buf);
+
+// Close connection
+tcp->close();
+```
+
+### Use ChaCha20 Encryption
+```cpp
+#include "federated/crypto/chacha20.h"
+#include "federated/core/buffer.h"
+
+using namespace federated;
+
+// Get ChaCha20 instance
+crypto::Crypto* chacha = crypto::ChaCha20Crypto::get_instance();
+
+// Prepare key (32 bytes) + nonce (12 bytes)
+uint8_t key_data[44];
+// ... fill with key and nonce ...
+core::Buffer key(key_data, 44);
+
+// Encrypt
+const char* plaintext = "Secret message";
+core::Buffer plain_buf(
+    const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(plaintext)),
+    strlen(plaintext)
+);
+
+uint8_t cipher_data[1024];
+core::Buffer cipher_buf(cipher_data, sizeof(cipher_data));
+
+chacha->encrypt(plain_buf, key, cipher_buf);
+
+// Decrypt (symmetric)
+uint8_t decrypted_data[1024];
+core::Buffer decrypted_buf(decrypted_data, sizeof(decrypted_data));
+
+chacha->decrypt(cipher_buf, key, decrypted_buf);
+```
+
+### Use CRC Framing
+```cpp
+#include "federated/framer/crc.h"
+#include "federated/core/buffer.h"
+
+using namespace federated;
+
+// Get CRC framer
+framer::Framer* crc = framer::CRCFramer::get_instance();
+
+// Encode with CRC checksum
+const char* data = "Important data";
+core::Buffer input(
+    const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(data)),
+    strlen(data)
+);
+
+uint8_t frame_data[1024];
+core::Buffer frame_buf(frame_data, sizeof(frame_data));
+
+crc->encode(input, frame_buf);
+
+// Decode and verify
+uint8_t decoded_data[1024];
+core::Buffer decoded_buf(decoded_data, sizeof(decoded_data));
+
+core::ErrorCode err = crc->decode(frame_buf, decoded_buf);
+if (err == core::OK) {
+    // CRC valid, data intact
+} else {
+    // CRC failed, data corrupted
+}
+```
+
+---
+
 ## Architecture
 
 ```
