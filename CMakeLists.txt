@@ -42,6 +42,11 @@ target_link_libraries(federated_transport
     federated_core
 )
 
+# Platform-specific socket libraries for TCP/UDP
+if(WIN32)
+    target_link_libraries(federated_transport ws2_32)
+endif()
+
 # Framer library
 add_library(federated_framer
     src/framer/raw.cpp
