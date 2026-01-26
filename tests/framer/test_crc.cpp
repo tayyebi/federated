@@ -98,29 +98,25 @@ TEST(crc_various_payload_sizes) {
     for (uint32_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
         uint32_t size = sizes[i];
         
-        // Create payload with pattern
-        uint8_t* payload = new uint8_t[size];
+        // Create payload with pattern (use stack for smaller sizes, check in chunks)
+        uint8_t payload[1024];
         for (uint32_t j = 0; j < size; j++) {
             payload[j] = static_cast<uint8_t>(j & 0xFF);
         }
         Buffer pay_buf(payload, size);
         
         // Encode
-        uint8_t* encoded = new uint8_t[size + 16];
-        Buffer enc_buf(encoded, size + 16);
+        uint8_t encoded[2048];
+        Buffer enc_buf(encoded, sizeof(encoded));
         TEST_ASSERT_EQ(f->encode(pay_buf, enc_buf), OK);
         TEST_ASSERT_EQ(enc_buf.size, size + 8);
         
         // Decode
-        uint8_t* decoded = new uint8_t[size + 16];
-        Buffer dec_buf(decoded, size + 16);
+        uint8_t decoded[1024];
+        Buffer dec_buf(decoded, sizeof(decoded));
         TEST_ASSERT_EQ(f->decode(enc_buf, dec_buf), OK);
         TEST_ASSERT_EQ(dec_buf.size, size);
         TEST_ASSERT_EQ(memcmp(decoded, payload, size), 0);
-        
-        delete[] payload;
-        delete[] encoded;
-        delete[] decoded;
     }
 }
 

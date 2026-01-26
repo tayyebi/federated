@@ -69,7 +69,7 @@ static core::ErrorCode crc_encode(const core::Buffer& payload, core::Buffer& out
     memcpy(output.data + 4, payload.data, payload.size);
     
     // Compute and write CRC32 in network byte order
-    uint32_t crc = crc32_compute(static_cast<const uint8_t*>(payload.data), payload.size);
+    uint32_t crc = crc32_compute(payload.data, payload.size);
     crc = core::hton32(crc);
     memcpy(output.data + 4 + payload.size, &crc, 4);
     
@@ -106,11 +106,11 @@ static core::ErrorCode crc_decode(const core::Buffer& frame, core::Buffer& outpu
     
     // Read CRC from frame
     uint32_t received_crc;
-    memcpy(&received_crc, static_cast<const uint8_t*>(frame.data) + 4 + length, 4);
+    memcpy(&received_crc, frame.data + 4 + length, 4);
     received_crc = core::ntoh32(received_crc);
     
     // Compute CRC of payload
-    uint32_t computed_crc = crc32_compute(static_cast<const uint8_t*>(frame.data) + 4, length);
+    uint32_t computed_crc = crc32_compute(frame.data + 4, length);
     
     // Verify CRC matches
     if (received_crc != computed_crc) {
@@ -118,7 +118,7 @@ static core::ErrorCode crc_decode(const core::Buffer& frame, core::Buffer& outpu
     }
     
     // Extract payload
-    memcpy(output.data, static_cast<const uint8_t*>(frame.data) + 4, length);
+    memcpy(output.data, frame.data + 4, length);
     output.size = length;
     
     return core::OK;
