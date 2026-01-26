@@ -128,6 +128,7 @@ add_executable(federated_tests
     tests/transport/test_file.cpp
     tests/transport/test_tcp.cpp
     tests/transport/test_udp.cpp
+    tests/transport/test_dns_tunnel.cpp
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
     tests/framer/test_crc.cpp

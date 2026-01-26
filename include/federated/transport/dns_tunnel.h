@@ -16,24 +16,22 @@ namespace transport {
  * Useful in heavily firewalled/censored networks where only DNS is allowed.
  * 
  * Technique:
- * - Encode data in subdomain labels (base32/base64)
+ * - Encode data in subdomain labels (base32 encoding per RFC 4648)
  * - Use TXT records for responses
- * - Limited bandwidth (~100-500 bytes per query)
+ * - Limited bandwidth (~100-200 bytes per query)
  * - High latency but bypasses most firewalls
  * 
  * Implementation:
- * - Encode data as DNS subdomain labels
- * - Send DNS TXT queries with encoded data
- * - Parse DNS responses
- * - Handle DNS query/response format (RFC 1035 Section 4)
- * - Rate limiting to avoid detection
- * - Use UDP socket for DNS queries (port 53)
+ * - Base32 encoding for DNS-safe characters
+ * - DNS query construction following RFC 1035
+ * - UDP socket for DNS queries (port 53)
+ * - Configurable DNS server (defaults to 8.8.8.8)
  * 
- * Current Status: STUB IMPLEMENTATION
- * - TODO: Full DNS tunnel protocol implementation
- * - TODO: Base32/Base64 encoding of payloads
- * - TODO: DNS query construction and parsing
- * - TODO: Integration with DNS server
+ * Current Status: BASIC IMPLEMENTATION
+ * - Functional send path with base32 encoding
+ * - Basic DNS query construction
+ * - Receive path simplified (full TXT parsing can be added)
+ * - Works with standard DNS servers
  */
 struct DNSTunnelTransport {
     static Transport* get_instance();
