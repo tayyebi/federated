@@ -9,7 +9,10 @@ using namespace federated::crypto;
 using namespace federated::core;
 
 // Helper to create key buffer
-static Buffer create_chacha20_key(const uint8_t key[32], const uint8_t nonce[12], const uint8_t* counter = nullptr) {
+// Note: Returns static buffer - tests are single-threaded
+static Buffer create_chacha20_key_unsafe(const uint8_t key[32], const uint8_t nonce[12], const uint8_t* counter = nullptr) {
+    // Static buffer for test convenience - NOT thread-safe
+    // Production code should allocate per-call or use thread-local storage
     static uint8_t key_buffer[48];
     std::memcpy(key_buffer, key, 32);
     std::memcpy(key_buffer + 32, nonce, 12);
@@ -34,7 +37,7 @@ TEST(chacha20_rfc_test_vector) {
     // Counter: 1
     uint8_t counter[4] = {0x01, 0x00, 0x00, 0x00};
     
-    Buffer key_buf = create_chacha20_key(key, nonce, counter);
+    Buffer key_buf = create_chacha20_key_unsafe(key, nonce, counter);
     
     // Plaintext
     const char* plaintext_str = "Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
@@ -87,7 +90,7 @@ TEST(chacha20_roundtrip) {
     for (int i = 0; i < 32; i++) key[i] = static_cast<uint8_t>(i * 3);
     
     uint8_t nonce[12] = {0};
-    Buffer key_buf = create_chacha20_key(key, nonce);
+    Buffer key_buf = create_chacha20_key_unsafe(key, nonce);
     
     // Test data
     const char* original = "Secret message for encryption";
@@ -119,7 +122,7 @@ TEST(chacha20_empty_message) {
     
     uint8_t key[32] = {0};
     uint8_t nonce[12] = {0};
-    Buffer key_buf = create_chacha20_key(key, nonce);
+    Buffer key_buf = create_chacha20_key_unsafe(key, nonce);
     
     Buffer empty(nullptr, 0);
     uint8_t output_data[64];
@@ -137,7 +140,7 @@ TEST(chacha20_large_message) {
     for (int i = 0; i < 32; i++) key[i] = static_cast<uint8_t>(i);
     
     uint8_t nonce[12] = {0};
-    Buffer key_buf = create_chacha20_key(key, nonce);
+    Buffer key_buf = create_chacha20_key_unsafe(key, nonce);
     
     // Create a large message (200 bytes - more than 3 ChaCha20 blocks)
     uint8_t large_data[200];
@@ -189,7 +192,7 @@ TEST(chacha20_different_keys) {
     // First key
     uint8_t key1[32] = {0};
     uint8_t nonce1[12] = {0};
-    Buffer key_buf1 = create_chacha20_key(key1, nonce1);
+    Buffer key_buf1 = create_chacha20_key_unsafe(key1, nonce1);
     
     const char* msg = "Test message";
     size_t msg_len = std::strlen(msg);
@@ -203,7 +206,7 @@ TEST(chacha20_different_keys) {
     uint8_t key2[32];
     for (int i = 0; i < 32; i++) key2[i] = 0xFF;
     uint8_t nonce2[12] = {0};
-    Buffer key_buf2 = create_chacha20_key(key2, nonce2);
+    Buffer key_buf2 = create_chacha20_key_unsafe(key2, nonce2);
     
     uint8_t ciphertext2_data[64];
     Buffer ciphertext2(ciphertext2_data, sizeof(ciphertext2_data));
