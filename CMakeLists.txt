@@ -61,6 +61,7 @@ target_link_libraries(federated_framer
 # Crypto library
 add_library(federated_crypto
     src/crypto/none.cpp
+    src/crypto/xor_stream.cpp
 )
 
 target_include_directories(federated_crypto PUBLIC
@@ -120,6 +121,7 @@ add_executable(federated_tests
     tests/framer/test_crc.cpp
     tests/framer/test_chunked.cpp
     tests/crypto/test_none.cpp
+    tests/crypto/test_xor_stream.cpp
     tests/service/test_mail.cpp
     tests/service/test_smtp.cpp
     tests/service/test_imap.cpp
