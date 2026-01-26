@@ -30,6 +30,8 @@ target_include_directories(federated_core PUBLIC
 add_library(federated_transport
     src/transport/loopback.cpp
     src/transport/file.cpp
+    src/transport/tcp.cpp
+    src/transport/udp.cpp
 )
 
 target_include_directories(federated_transport PUBLIC
@@ -40,10 +42,17 @@ target_link_libraries(federated_transport
     federated_core
 )
 
+# Platform-specific socket libraries for TCP/UDP
+if(WIN32)
+    target_link_libraries(federated_transport ws2_32)
+endif()
+
 # Framer library
 add_library(federated_framer
     src/framer/raw.cpp
     src/framer/length_prefix.cpp
+    src/framer/crc.cpp
+    src/framer/chunked.cpp
 )
 
 target_include_directories(federated_framer PUBLIC
@@ -57,6 +66,7 @@ target_link_libraries(federated_framer
 # Crypto library
 add_library(federated_crypto
     src/crypto/none.cpp
+    src/crypto/xor_stream.cpp
 )
 
 target_include_directories(federated_crypto PUBLIC
@@ -73,6 +83,7 @@ add_library(federated_service
     src/service/smtp.cpp
     src/service/imap.cpp
     src/service/http.cpp
+    src/service/http_server.cpp
 )
 
 target_include_directories(federated_service PUBLIC
@@ -109,16 +120,25 @@ add_executable(federated_tests
     tests/core/test_registry.cpp
     tests/transport/test_loopback.cpp
     tests/transport/test_file.cpp
+    tests/transport/test_tcp.cpp
+    tests/transport/test_udp.cpp
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
+    tests/framer/test_crc.cpp
+    tests/framer/test_chunked.cpp
     tests/crypto/test_none.cpp
+    tests/crypto/test_xor_stream.cpp
     tests/service/test_mail.cpp
     tests/service/test_smtp.cpp
     tests/service/test_imap.cpp
     tests/service/test_http.cpp
+    tests/service/test_http_server.cpp
     tests/scenarios/scenario_file_transfer.cpp
     tests/scenarios/scenario_end_to_end_crypto.cpp
     tests/scenarios/scenario_store_and_forward.cpp
+    tests/scenarios/scenario_tcp_communication.cpp
+    tests/scenarios/scenario_udp_datagram.cpp
+    tests/scenarios/scenario_http_static_server.cpp
 )
 
 target_link_libraries(federated_tests
