@@ -78,6 +78,7 @@ add_library(federated_service
     src/service/smtp.cpp
     src/service/imap.cpp
     src/service/http.cpp
+    src/service/http_server.cpp
 )
 
 target_include_directories(federated_service PUBLIC
@@ -126,11 +127,13 @@ add_executable(federated_tests
     tests/service/test_smtp.cpp
     tests/service/test_imap.cpp
     tests/service/test_http.cpp
+    tests/service/test_http_server.cpp
     tests/scenarios/scenario_file_transfer.cpp
     tests/scenarios/scenario_end_to_end_crypto.cpp
     tests/scenarios/scenario_store_and_forward.cpp
     tests/scenarios/scenario_tcp_communication.cpp
     tests/scenarios/scenario_udp_datagram.cpp
+    tests/scenarios/scenario_http_static_server.cpp
 )
 
 target_link_libraries(federated_tests
