@@ -196,6 +196,34 @@ static core::ErrorCode tcp_close() {
     return core::OK;
 }
 
+// Wait for socket to be ready for reading
+static bool wait_for_recv(SOCKET sock, int timeout_ms) {
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    FD_SET(sock, &read_fds);
+    
+    struct timeval tv;
+    tv.tv_sec = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    
+    int result = select(sock + 1, &read_fds, nullptr, nullptr, &tv);
+    return result > 0;
+}
+
+// Wait for socket to be ready for writing
+static bool wait_for_send(SOCKET sock, int timeout_ms) {
+    fd_set write_fds;
+    FD_ZERO(&write_fds);
+    FD_SET(sock, &write_fds);
+    
+    struct timeval tv;
+    tv.tv_sec = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    
+    int result = select(sock + 1, nullptr, &write_fds, nullptr, &tv);
+    return result > 0;
+}
+
 // Establish connection (client connects to server)
 static core::ErrorCode ensure_connection() {
     if (g_tcp_state.connection_established) {
@@ -244,20 +272,24 @@ static core::ErrorCode ensure_connection() {
     // Set listen socket to non-blocking for accept
     set_nonblocking(g_tcp_state.listen_socket);
     
-    // Try accepting with a brief retry loop
-    int retry_count = 10;
-    while (retry_count-- > 0) {
-        g_tcp_state.server_socket = accept(g_tcp_state.listen_socket, 
-                                          (struct sockaddr*)&client_addr, &client_len);
-        if (g_tcp_state.server_socket != INVALID_SOCKET) {
-            break;
-        }
-#ifdef _WIN32
-        Sleep(10); // 10ms
-#else
-        usleep(10000); // 10ms
-#endif
+    // Wait for incoming connection with select
+    fd_set accept_fds;
+    FD_ZERO(&accept_fds);
+    FD_SET(g_tcp_state.listen_socket, &accept_fds);
+    
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    
+    int select_result = select(g_tcp_state.listen_socket + 1, &accept_fds, nullptr, nullptr, &tv);
+    if (select_result <= 0) {
+        close_socket(g_tcp_state.client_socket);
+        g_tcp_state.client_socket = INVALID_SOCKET;
+        return core::ERR_IO;
     }
+    
+    g_tcp_state.server_socket = accept(g_tcp_state.listen_socket, 
+                                      (struct sockaddr*)&client_addr, &client_len);
     
     if (g_tcp_state.server_socket == INVALID_SOCKET) {
         close_socket(g_tcp_state.client_socket);
@@ -302,11 +334,10 @@ static core::ErrorCode tcp_send(const core::Buffer& data) {
 #else
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
 #endif
-#ifdef _WIN32
-                Sleep(1);
-#else
-                usleep(1000);
-#endif
+                // Wait for socket to be ready
+                if (!wait_for_send(g_tcp_state.client_socket, 100)) {
+                    return core::ERR_TIMEOUT;
+                }
                 continue;
             }
             return core::ERR_IO;
@@ -321,14 +352,17 @@ static core::ErrorCode tcp_send(const core::Buffer& data) {
     uint8_t temp_buf[MAX_MESSAGE_SIZE];
     size_t total_received = 0;
     
-    // Give time for data to arrive
-#ifdef _WIN32
-    Sleep(10);
-#else
-    usleep(10000);
-#endif
+    // Wait for data to arrive using select
+    if (!wait_for_recv(g_tcp_state.server_socket, RECV_TIMEOUT_MS)) {
+        return core::ERR_TIMEOUT;
+    }
     
     while (total_received < data.size) {
+        if (total_received > 0 && !wait_for_recv(g_tcp_state.server_socket, 10)) {
+            // No more data available
+            break;
+        }
+        
         int received = recv(g_tcp_state.server_socket,
                            (char*)(temp_buf + total_received),
                            data.size - total_received, 0);
@@ -340,12 +374,7 @@ static core::ErrorCode tcp_send(const core::Buffer& data) {
 #else
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
 #endif
-#ifdef _WIN32
-                Sleep(1);
-#else
-                usleep(1000);
-#endif
-                continue;
+                break;
             }
             return core::ERR_IO;
         }
