@@ -46,6 +46,7 @@ target_link_libraries(federated_transport
 add_library(federated_framer
     src/framer/raw.cpp
     src/framer/length_prefix.cpp
+    src/framer/crc.cpp
 )
 
 target_include_directories(federated_framer PUBLIC
@@ -115,6 +116,7 @@ add_executable(federated_tests
     tests/transport/test_udp.cpp
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
+    tests/framer/test_crc.cpp
     tests/crypto/test_none.cpp
     tests/service/test_mail.cpp
     tests/service/test_smtp.cpp
