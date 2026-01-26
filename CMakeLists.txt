@@ -31,6 +31,7 @@ add_library(federated_transport
     src/transport/loopback.cpp
     src/transport/file.cpp
     src/transport/tcp.cpp
+    src/transport/udp.cpp
 )
 
 target_include_directories(federated_transport PUBLIC
@@ -111,6 +112,7 @@ add_executable(federated_tests
     tests/transport/test_loopback.cpp
     tests/transport/test_file.cpp
     tests/transport/test_tcp.cpp
+    tests/transport/test_udp.cpp
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
     tests/crypto/test_none.cpp
@@ -122,6 +124,7 @@ add_executable(federated_tests
     tests/scenarios/scenario_end_to_end_crypto.cpp
     tests/scenarios/scenario_store_and_forward.cpp
     tests/scenarios/scenario_tcp_communication.cpp
+    tests/scenarios/scenario_udp_datagram.cpp
 )
 
 target_link_libraries(federated_tests
