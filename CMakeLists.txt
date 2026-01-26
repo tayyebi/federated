@@ -30,6 +30,7 @@ target_include_directories(federated_core PUBLIC
 add_library(federated_transport
     src/transport/loopback.cpp
     src/transport/file.cpp
+    src/transport/tcp.cpp
 )
 
 target_include_directories(federated_transport PUBLIC
@@ -109,6 +110,7 @@ add_executable(federated_tests
     tests/core/test_registry.cpp
     tests/transport/test_loopback.cpp
     tests/transport/test_file.cpp
+    tests/transport/test_tcp.cpp
     tests/framer/test_raw.cpp
     tests/framer/test_length_prefix.cpp
     tests/crypto/test_none.cpp
@@ -119,6 +121,7 @@ add_executable(federated_tests
     tests/scenarios/scenario_file_transfer.cpp
     tests/scenarios/scenario_end_to_end_crypto.cpp
     tests/scenarios/scenario_store_and_forward.cpp
+    tests/scenarios/scenario_tcp_communication.cpp
 )
 
 target_link_libraries(federated_tests
