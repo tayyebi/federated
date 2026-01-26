@@ -24,7 +24,10 @@ namespace federated {
 namespace transport {
 
 // UDP datagram state
-constexpr size_t MAX_DATAGRAM_SIZE = 65507; // Max UDP payload size (65535 - 20 IP - 8 UDP)
+constexpr size_t IP_HEADER_SIZE = 20;   // IPv4 header size
+constexpr size_t UDP_HEADER_SIZE = 8;   // UDP header size
+constexpr size_t MAX_IP_DATAGRAM = 65535; // Maximum IP datagram size
+constexpr size_t MAX_DATAGRAM_SIZE = MAX_IP_DATAGRAM - IP_HEADER_SIZE - UDP_HEADER_SIZE; // 65507 bytes
 constexpr int DEFAULT_PORT = 0; // Ephemeral port
 constexpr const char* LOCALHOST = "127.0.0.1";
 constexpr int RECV_TIMEOUT_MS = 100;

@@ -149,16 +149,18 @@ TEST(scenario_udp_variable_size_datagrams) {
     printf("     b) 16 byte datagram sent\n");
     
     // Medium datagram (256 bytes)
-    uint8_t medium_buf[256];
-    for (int i = 0; i < 256; i++) medium_buf[i] = (uint8_t)i;
-    core::Buffer medium_dgram(medium_buf, 256);
+    constexpr size_t MEDIUM_SIZE = 256;
+    uint8_t medium_buf[MEDIUM_SIZE];
+    for (size_t i = 0; i < MEDIUM_SIZE; i++) medium_buf[i] = (uint8_t)i;
+    core::Buffer medium_dgram(medium_buf, MEDIUM_SIZE);
     TEST_ASSERT_EQ(udp->send(medium_dgram), core::OK);
     printf("     c) 256 byte datagram sent\n");
     
-    // Large datagram (1024 bytes)
-    uint8_t large_buf[1024];
-    for (int i = 0; i < 1024; i++) large_buf[i] = (uint8_t)(i % 256);
-    core::Buffer large_dgram(large_buf, 1024);
+    // Large datagram (1024 bytes, within standard MTU)
+    constexpr size_t LARGE_SIZE = 1024;
+    uint8_t large_buf[LARGE_SIZE];
+    for (size_t i = 0; i < LARGE_SIZE; i++) large_buf[i] = (uint8_t)(i % 256);
+    core::Buffer large_dgram(large_buf, LARGE_SIZE);
     TEST_ASSERT_EQ(udp->send(large_dgram), core::OK);
     printf("     d) 1024 byte datagram sent\n");
     
@@ -167,29 +169,30 @@ TEST(scenario_udp_variable_size_datagrams) {
     // Receive each datagram with exact size preservation
     printf("  4. Receiving and verifying sizes:\n");
     
-    uint8_t recv_tiny[1024];
+    constexpr size_t MAX_RECV_BUF = 2048;
+    uint8_t recv_tiny[MAX_RECV_BUF];
     core::Buffer r_tiny(recv_tiny, sizeof(recv_tiny));
     TEST_ASSERT_EQ(udp->recv(r_tiny), core::OK);
     TEST_ASSERT_EQ(r_tiny.size, 1);
     TEST_ASSERT_EQ(recv_tiny[0], 0x42);
     printf("     a) Received 1 byte datagram ✓\n");
     
-    uint8_t recv_small[1024];
+    uint8_t recv_small[MAX_RECV_BUF];
     core::Buffer r_small(recv_small, sizeof(recv_small));
     TEST_ASSERT_EQ(udp->recv(r_small), core::OK);
     TEST_ASSERT_EQ(r_small.size, 16);
     printf("     b) Received 16 byte datagram ✓\n");
     
-    uint8_t recv_medium[1024];
+    uint8_t recv_medium[MAX_RECV_BUF];
     core::Buffer r_medium(recv_medium, sizeof(recv_medium));
     TEST_ASSERT_EQ(udp->recv(r_medium), core::OK);
-    TEST_ASSERT_EQ(r_medium.size, 256);
+    TEST_ASSERT_EQ(r_medium.size, MEDIUM_SIZE);
     printf("     c) Received 256 byte datagram ✓\n");
     
-    uint8_t recv_large[1024];
+    uint8_t recv_large[MAX_RECV_BUF];
     core::Buffer r_large(recv_large, sizeof(recv_large));
     TEST_ASSERT_EQ(udp->recv(r_large), core::OK);
-    TEST_ASSERT_EQ(r_large.size, 1024);
+    TEST_ASSERT_EQ(r_large.size, LARGE_SIZE);
     printf("     d) Received 1024 byte datagram ✓\n");
     
     printf("  5. All datagrams received with correct sizes ✓\n");

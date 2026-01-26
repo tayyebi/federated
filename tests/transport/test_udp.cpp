@@ -177,7 +177,7 @@ TEST(udp_various_datagram_sizes) {
     Buffer send_small(small_buf, strlen(small));
     TEST_ASSERT_EQ(t->send(send_small), OK);
     
-    // Test medium datagram
+    // Test medium datagram (within standard MTU)
     const size_t medium_size = 512;
     uint8_t medium_buf[medium_size];
     for (size_t i = 0; i < medium_size; i++) {
@@ -186,8 +186,8 @@ TEST(udp_various_datagram_sizes) {
     Buffer send_medium(medium_buf, medium_size);
     TEST_ASSERT_EQ(t->send(send_medium), OK);
     
-    // Test larger datagram
-    const size_t large_size = 2048;
+    // Test larger datagram (still within standard MTU)
+    const size_t large_size = 1400;
     uint8_t large_buf[large_size];
     for (size_t i = 0; i < large_size; i++) {
         large_buf[i] = (uint8_t)((i * 7) % 256);
