@@ -183,6 +183,9 @@ SCENARIO(bridge_network_discovery) {
 SCENARIO(peer_exchange_network_growth) {
     federation::Federation* fed = federation::SimpleFederation::get_instance();
     
+    // Clear any previous state
+    fed->clear_peers();
+    
     // Start with just 2 bootstrap nodes
     const char* bootstrap[] = {
         "192.168.1.10:9050",

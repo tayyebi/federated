@@ -181,6 +181,13 @@ public:
     virtual core::ErrorCode remove_peer(
         uint32_t peer_id
     ) = 0;
+    
+    /**
+     * Clear all peers (for testing)
+     * 
+     * @return OK on success
+     */
+    virtual core::ErrorCode clear_peers() = 0;
 };
 
 /**
@@ -236,6 +243,8 @@ public:
     core::ErrorCode remove_peer(
         uint32_t peer_id
     ) override;
+    
+    core::ErrorCode clear_peers() override;
     
     /**
      * Get singleton instance

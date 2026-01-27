@@ -95,6 +95,9 @@ TEST(federation_add_peer) {
 TEST(federation_remove_peer) {
     Federation* fed = SimpleFederation::get_instance();
     
+    // Clear any previous state
+    fed->clear_peers();
+    
     fed->initialize(nullptr, 0);
     
     // Add a peer
@@ -128,6 +131,9 @@ TEST(federation_remove_peer) {
 // Test: Get peers list
 TEST(federation_get_peers) {
     Federation* fed = SimpleFederation::get_instance();
+    
+    // Clear any previous state
+    fed->clear_peers();
     
     const char* bootstrap[] = {
         "192.168.1.10:9050",
@@ -266,6 +272,9 @@ TEST(federation_nodeinfo_structure) {
 // Test: Multiple peers with different capabilities
 TEST(federation_peer_capabilities) {
     Federation* fed = SimpleFederation::get_instance();
+    
+    // Clear any previous state
+    fed->clear_peers();
     
     fed->initialize(nullptr, 0);
     

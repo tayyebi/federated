@@ -200,5 +200,11 @@ core::ErrorCode SimpleFederation::remove_peer(
     return core::ERR_NOT_FOUND;
 }
 
+core::ErrorCode SimpleFederation::clear_peers() {
+    peer_count = 0;
+    is_initialized = false;
+    return core::OK;
+}
+
 } // namespace federation
 } // namespace federated
