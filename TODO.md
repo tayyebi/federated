@@ -15,7 +15,7 @@
 - [x] Registry - Global component registry
 - [x] Endian - Portable byte-order conversion
 
-#### Transport Layer (82% - 9 of 11 planned)
+#### Transport Layer (82% - 9 of 11 with stubs, 45% fully functional - 5 of 11)
 - [x] Loopback - In-memory testing transport (FULL)
 - [x] File - Store-and-forward transport (FULL)
 - [x] TCP - TCP socket transport (RFC 793) (FULL)
@@ -115,7 +115,7 @@
 - [x] docs/rfc_references.md - Complete RFC reference list
 - [x] docs/test_plan.md - Test strategy and scenarios
 - [x] docs/architecture.md - Architecture overview
-- [x] docs/STATUS.md - Current implementation status
+- [ ] docs/STATUS.md - Current implementation status (NEEDS UPDATE - outdated)
 - [ ] docs/protocols.md - Protocol specifications (partial in rfc_references.md)
 - [ ] docs/ux.md - User experience guidelines
 
@@ -286,7 +286,7 @@
 - [x] docs/rfc_references.md - Complete RFC reference guide
 - [x] docs/test_plan.md - Comprehensive test strategy
 - [x] docs/architecture.md - Architecture overview
-- [x] docs/STATUS.md - Current implementation status
+- [ ] docs/STATUS.md - Current implementation status (NEEDS UPDATE - shows outdated test counts)
 - [ ] docs/protocols.md - Protocol specifications (partial in rfc_references.md)
 - [ ] docs/ux.md - User experience design and principles
 
@@ -416,7 +416,7 @@ All implementation files must include RFC references in header comments:
    - [x] docs/rfc_references.md
    - [x] docs/test_plan.md
    - [x] docs/architecture.md
-   - [x] docs/STATUS.md
+   - [ ] docs/STATUS.md (needs update)
    - [ ] docs/protocols.md (partially covered in rfc_references.md)
    - [ ] docs/ux.md
 
