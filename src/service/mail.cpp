@@ -24,7 +24,6 @@ namespace service {
 
 // Simple in-memory mail store (for testing, will add file persistence later)
 static const size_t MAX_MESSAGES = 1000;
-static const size_t MAX_MAILBOXES = 4;
 
 struct StoredMessage {
     MailMessage msg;
