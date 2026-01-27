@@ -4,6 +4,49 @@
 
 ---
 
+<!-- AI AGENT INSTRUCTIONS
+When updating this TODO.md file:
+
+1. ALWAYS verify claims against actual code:
+   - Run tests to get exact counts: `cd build && ./federated_tests | grep "Summary:"`
+   - Count test files: `find tests/ -name "*.cpp" -exec grep "^TEST(" {} \; | wc -l`
+   - Check implementation files in src/, include/, tests/ directories
+   - Review documentation files in docs/ directory
+
+2. Clearly mark implementation status:
+   - (FULL) - Fully implemented and tested, production-ready
+   - (STUB) - Documented stub with TODO markers, include reason (e.g., "requires platform APIs")
+   - No marker - Planned for future implementation
+
+3. Update completion percentages accurately:
+   - Calculate both "with stubs" and "fully functional" percentages
+   - Example: "82% - 9 of 11 with stubs, 45% fully functional - 5 of 11"
+
+4. Keep test metrics current:
+   - Total tests = unit tests + scenario tests
+   - Verify assertion counts from actual test runs
+   - Update breakdown: X unit + Y scenario = Z total
+
+5. Document new features immediately:
+   - Add services, tools, examples as they are implemented
+   - Include test counts and RFC references where applicable
+   - Update phase completion status
+
+6. Maintain consistency:
+   - Use the same format for similar items
+   - Keep phase numbering sequential
+   - Remove duplicate or outdated sections
+   - Update "Last Updated" date
+
+7. Cross-reference with other docs:
+   - Mark STATUS.md, IMPLEMENTATION_SUMMARY.md if they need updates
+   - Ensure consistency across all documentation files
+
+This file is the source of truth for project status. Keep it accurate and up-to-date.
+-->
+
+---
+
 ## Current Status
 
 ### ✅ Completed (Phase 1: Foundation)
