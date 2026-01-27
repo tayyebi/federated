@@ -74,12 +74,18 @@ SCENARIO(anonymous_onion_communication) {
     // Step 6: Verify encryption (packet should not contain plaintext)
     // Search for plaintext substring in encrypted packet
     bool plaintext_found = false;
-    for (size_t i = 0; i < packet.size - strlen(secret); i++) {
-        if (memcmp(packet.data + i, secret, strlen(secret)) == 0) {
-            plaintext_found = true;
-            break;
+    size_t secret_len = strlen(secret);
+    
+    // Only search if packet is large enough to contain the plaintext
+    if (packet.size >= secret_len) {
+        for (size_t i = 0; i <= packet.size - secret_len; i++) {
+            if (memcmp(packet.data + i, secret, secret_len) == 0) {
+                plaintext_found = true;
+                break;
+            }
         }
     }
+    
     ASSERT_FALSE(plaintext_found); // Plaintext should be encrypted
     
     // Step 7: Clean up

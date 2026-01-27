@@ -74,6 +74,10 @@ core::ErrorCode SimpleOnionRouter::create_circuit(
     }
     
     // Create crypto layer for each hop
+    // Note: Currently uses singleton ChaCha20 instance for all hops.
+    // This is safe because each encryption uses a different session key.
+    // Future enhancement: Could use separate crypto instances per hop
+    // for additional isolation if needed.
     circuit->crypto_layers = new crypto::Crypto*[hop_count];
     for (size_t i = 0; i < hop_count; i++) {
         // Use ChaCha20 for each layer
@@ -81,12 +85,23 @@ core::ErrorCode SimpleOnionRouter::create_circuit(
     }
     
     // Add to active circuits
+    bool added = false;
     for (size_t i = 0; i < circuit_capacity; i++) {
         if (!active_circuits[i]) {
             active_circuits[i] = circuit;
             circuit_count++;
+            added = true;
             break;
         }
+    }
+    
+    // If we couldn't add to active circuits (shouldn't happen due to check above),
+    // clean up and return error
+    if (!added) {
+        delete[] circuit->hops;
+        delete[] circuit->crypto_layers;
+        delete circuit;
+        return core::ERR_OUT_OF_MEMORY;
     }
     
     *out_circuit = circuit;
