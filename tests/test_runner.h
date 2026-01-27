@@ -88,6 +88,16 @@ int run_all_tests();
     } \
     void test_##name()
 
+// Scenario macro (same as TEST)
+#define SCENARIO(name) TEST(name)
+
+// Convenience aliases for common assertions
+#define ASSERT_TRUE(cond) TEST_ASSERT(cond)
+#define ASSERT_FALSE(cond) TEST_ASSERT(!(cond))
+#define ASSERT_EQUAL(a, b) TEST_ASSERT_EQ(a, b)
+#define ASSERT_NOT_EQUAL(a, b) TEST_ASSERT_NE(a, b)
+#define ASSERT_NOT_NULL(ptr) TEST_ASSERT((ptr) != nullptr)
+
 } // namespace test
 } // namespace federated
 

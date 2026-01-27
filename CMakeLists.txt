@@ -83,6 +83,34 @@ target_link_libraries(federated_crypto
     federated_core
 )
 
+# Onion routing library
+add_library(federated_onion
+    src/onion/onion.cpp
+)
+
+target_include_directories(federated_onion PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_onion
+    federated_core
+    federated_crypto
+    federated_transport
+)
+
+# Federation library
+add_library(federated_federation
+    src/federation/federation.cpp
+)
+
+target_include_directories(federated_federation PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(federated_federation
+    federated_core
+)
+
 # Service library (email + HTTP subsystem)
 add_library(federated_service
     src/service/mail.cpp
@@ -136,6 +164,8 @@ add_executable(federated_tests
     tests/crypto/test_none.cpp
     tests/crypto/test_xor_stream.cpp
     tests/crypto/test_chacha20.cpp
+    tests/onion/test_onion.cpp
+    tests/federation/test_federation.cpp
     tests/service/test_mail.cpp
     tests/service/test_smtp.cpp
     tests/service/test_imap.cpp
@@ -147,6 +177,7 @@ add_executable(federated_tests
     tests/scenarios/scenario_tcp_communication.cpp
     tests/scenarios/scenario_udp_datagram.cpp
     tests/scenarios/scenario_http_static_server.cpp
+    tests/scenarios/scenario_onion_federation.cpp
 )
 
 target_link_libraries(federated_tests
@@ -154,6 +185,8 @@ target_link_libraries(federated_tests
     federated_transport
     federated_framer
     federated_crypto
+    federated_onion
+    federated_federation
     federated_service
 )
 
@@ -177,6 +210,8 @@ target_link_libraries(federated
     federated_transport
     federated_framer
     federated_crypto
+    federated_onion
+    federated_federation
     federated_service
     federated_tool
 )
