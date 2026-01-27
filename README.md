@@ -241,13 +241,29 @@ docs/                # Documentation
 
 All essential transports (TCP, UDP, DNS Tunnel), framers (CRC, Chunked), crypto (ChaCha20), and services (HTTP, SMTP, IMAP) implemented with comprehensive tests.
 
-#### ⏳ Phase 4-7: Advanced Features (Planned)
+#### ⏳ Phase 4: Advanced Features and Platform Integration (In Progress - Q1 2026)
+
+**High Priority:**
+- 🔴 AES Encryption (NIST FIPS 197, CBC and GCM modes)
+- 🟡 DNS Tunnel Enhancement (rate limiting, Base32 encoding, anti-detection)
+- 🔴 Bluetooth Transport (Linux with BlueZ, Windows with Winsock2)
+
+**Medium Priority:**
+- 🔴 WiFi Direct Transport (Linux with wpa_supplicant)
+- 🔴 Infrared Transport (IrDA over serial ports)
+
+**Documentation:**
+- ✅ Complete: Phase 4 Roadmap, Platform Abstraction Guide, TODO Tracking
+
+See `docs/PHASE4_ROADMAP.md` for detailed implementation plan.
+
+#### ⏳ Phase 5+: Future Enhancements (Planned)
 
 - Onion routing and federation layer
-- Additional transports (Audio, QR, FM Radio)
-- Advanced crypto (AES, key exchange, certificates)
+- Advanced transports (Audio, QR, FM Radio)
+- Public key cryptography (RSA/ECC - requires architecture decision)
 - Full CLI/TUI/Web interfaces
-- Performance benchmarking
+- Performance benchmarking and optimization
 
 ### Test Coverage
 
@@ -259,18 +275,22 @@ All essential transports (TCP, UDP, DNS Tunnel), framers (CRC, Chunked), crypto 
 
 ### Documentation
 
-- ✅ Complete: `docs/rfc_references.md`, `docs/test_plan.md`, `docs/architecture.md`
-- ⏳ Needs update: `docs/STATUS.md`
+- ✅ Complete: `docs/rfc_references.md`, `docs/test_plan.md`, `docs/architecture.md`, `docs/STATUS.md`
+- ✅ Complete: `docs/PHASE4_ROADMAP.md`, `docs/PLATFORM_ABSTRACTION.md`, `docs/TODO_TRACKING.md`
 - See `docs/` for detailed specifications
 
 ### Next Priorities
 
-1. AES implementation (NIST standards)
-2. Platform-dependent transport implementations
-3. Performance benchmarking framework
-4. Additional examples (microblog, P2P mesh, web service)
+1. **AES Implementation** (NIST FIPS 197) - 3-5 days
+2. **DNS Tunnel Enhancement** (rate limiting, Base32) - 4-6 days
+3. **Bluetooth Transport** (Linux first) - 5-7 days
+4. **Platform Abstraction Layer** (cross-platform support)
 
-For detailed roadmap and task tracking, see `.github/copilot-instructions.md` for AI agent guidelines.
+For detailed roadmap and task tracking:
+- **Implementation Plan**: `docs/PHASE4_ROADMAP.md`
+- **TODO Tracking**: `docs/TODO_TRACKING.md`
+- **Platform Guide**: `docs/PLATFORM_ABSTRACTION.md`
+- **AI Agent Guidelines**: `.github/agents/copilot-instructions.md`
 
 ---
 
