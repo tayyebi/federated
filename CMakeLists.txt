@@ -72,6 +72,7 @@ add_library(federated_crypto
     src/crypto/none.cpp
     src/crypto/xor_stream.cpp
     src/crypto/chacha20.cpp
+    src/crypto/aes.cpp
     src/crypto/public_key.cpp
 )
 
@@ -164,6 +165,7 @@ add_executable(federated_tests
     tests/crypto/test_none.cpp
     tests/crypto/test_xor_stream.cpp
     tests/crypto/test_chacha20.cpp
+    tests/crypto/test_aes.cpp
     tests/onion/test_onion.cpp
     tests/federation/test_federation.cpp
     tests/service/test_mail.cpp
