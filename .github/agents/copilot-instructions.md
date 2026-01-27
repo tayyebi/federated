@@ -578,10 +578,163 @@ TEST(smtp_parse_command) {
 
 If you're unsure about:
 - Architecture decisions → Check `README.md` and `docs/`
-- What to implement next → Check `TODO.md`
-- How to implement protocols → Check RFC references
+- What to implement next → Check `docs/TODO_TRACKING.md` and `docs/PHASE4_ROADMAP.md`
+- How to implement protocols → Check RFC references in `docs/rfc_references.md`
 - Test patterns → Look at existing tests in `tests/`
 - Error handling → Check `include/federated/core/error.h`
+- Platform-specific code → Check `docs/PLATFORM_ABSTRACTION.md`
+
+---
+
+## Phase 4 Implementation Guidelines
+
+### Platform-Specific Code
+
+**When implementing platform-dependent features (Bluetooth, WiFi Direct, Infrared):**
+
+1. **Use Platform Detection Macros:**
+```cpp
+#if defined(__linux__)
+    #define FEDERATED_PLATFORM_LINUX
+#elif defined(_WIN32) || defined(_WIN64)
+    #define FEDERATED_PLATFORM_WINDOWS
+#elif defined(__APPLE__) && defined(__MACH__)
+    #define FEDERATED_PLATFORM_MACOS
+#endif
+```
+
+2. **Provide Graceful Degradation:**
+```cpp
+#if defined(FEDERATED_PLATFORM_LINUX)
+    // Full implementation
+#elif defined(FEDERATED_PLATFORM_WINDOWS)
+    // Full implementation
+#else
+    // Stub returning ERR_UNSUPPORTED
+    return core::ERR_UNSUPPORTED;
+#endif
+```
+
+3. **Separate Platform-Specific Code:**
+   - Keep common logic platform-agnostic
+   - Use `#ifdef` guards for platform-specific sections
+   - For complex implementations, use separate files per platform
+   - See `docs/PLATFORM_ABSTRACTION.md` for patterns
+
+4. **Document Platform Requirements:**
+   - List required OS features in header comments
+   - Document known limitations per platform
+   - Note privilege requirements (e.g., Bluetooth pairing)
+
+### AES Implementation (Cryptography)
+
+**When implementing AES or other cryptographic algorithms:**
+
+1. **Constant-Time Operations:**
+```cpp
+// ✅ CORRECT - Constant time
+uint8_t lookup_result = sbox[index];
+
+// ❌ WRONG - Variable time (side-channel leak)
+if (value == secret_key[i]) {
+    // timing leak!
+}
+```
+
+2. **Use Lookup Tables:**
+   - S-Box and inverse S-Box should be precomputed tables
+   - MixColumns can use lookup tables for performance
+   - Trade memory for speed in cryptographic operations
+
+3. **Test with Standard Vectors:**
+   - NIST FIPS 197 Appendix C test vectors
+   - RFC test vectors where applicable
+   - Known Answer Tests (KAT)
+   - Multi-Block Message Tests (MMT)
+
+4. **Security First:**
+   - No shortcuts that compromise security
+   - Document any deviations from standards
+   - Side-channel resistance is critical
+
+### Covert/Stealth Transports (DNS Tunnel)
+
+**When implementing covert communication channels:**
+
+1. **Rate Limiting:**
+```cpp
+// Example: Rate limiter for DNS queries
+struct RateLimiter {
+    uint32_t max_qps;              // Max queries per second
+    uint64_t last_query_time_ms;   // Last query timestamp
+    
+    bool should_delay() {
+        uint64_t now = get_time_ms();
+        uint64_t min_interval = 1000 / max_qps;
+        if (now - last_query_time_ms < min_interval) {
+            return true;
+        }
+        last_query_time_ms = now;
+        return false;
+    }
+};
+```
+
+2. **Anti-Detection Features:**
+   - Add jitter to query timing (randomness)
+   - Respect DNS server rate limits
+   - Use multiple DNS servers for redundancy
+   - Randomize query patterns where possible
+
+3. **Encoding for Safety:**
+   - Base32 encoding for DNS-safe characters
+   - Respect label length limits (63 chars per label, 253 total)
+   - Handle DNS response parsing carefully
+
+### TODO Tracking
+
+**When working on Phase 4 tasks:**
+
+1. **Check TODO_TRACKING.md First:**
+   - Find your task by ID (e.g., CRYPTO-001, TRANSPORT-002)
+   - Read requirements and dependencies
+   - Check effort estimates
+
+2. **Update Progress:**
+   - Mark items as "In Progress" when starting
+   - Update completion percentage
+   - Move to "Completed" when done
+
+3. **Remove TODO Comments:**
+   - When implementing a feature, remove the TODO from code
+   - Update `docs/TODO_TRACKING.md` to reflect completion
+   - Document any deviations or limitations
+
+### CMake for Platform-Specific Code
+
+**When adding platform-specific sources:**
+
+```cmake
+# Platform detection
+if(UNIX AND NOT APPLE)
+    set(FEDERATED_PLATFORM_LINUX TRUE)
+elseif(WIN32)
+    set(FEDERATED_PLATFORM_WINDOWS TRUE)
+elseif(APPLE)
+    set(FEDERATED_PLATFORM_MACOS TRUE)
+endif()
+
+# Conditional source inclusion
+if(FEDERATED_PLATFORM_LINUX)
+    list(APPEND TRANSPORT_SOURCES
+        src/transport/bluetooth_linux.cpp
+    )
+elseif(FEDERATED_PLATFORM_WINDOWS)
+    list(APPEND TRANSPORT_SOURCES
+        src/transport/bluetooth_windows.cpp
+    )
+endif()
+```
 
 ---
 
@@ -593,7 +746,7 @@ If you're unsure about:
 3. RFC compliance with heavy comments
 4. Flat, atomic file structure
 5. Explicit ownership and error handling
-6. Follow TODO.md for feature priorities
+6. Check `docs/TODO_TRACKING.md` for current priorities
 
 **When in doubt:**
 - Keep it simple
@@ -601,5 +754,12 @@ If you're unsure about:
 - Test it thoroughly
 - Document it completely
 - Reference the RFC
+- Check the platform abstraction guide
+
+**Phase 4 Resources:**
+- `docs/PHASE4_ROADMAP.md` - Implementation plan
+- `docs/TODO_TRACKING.md` - Task tracking
+- `docs/PLATFORM_ABSTRACTION.md` - Platform code patterns
+- `docs/STATUS.md` - Current project status
 
 This is a **resilient communication toolkit** designed to survive anything. The code must be equally resilient - simple, explicit, testable, and dependency-free.
