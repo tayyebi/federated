@@ -1,6 +1,6 @@
 # Federated Project TODO
 
-**Last Updated:** 2026-01-26
+**Last Updated:** 2026-01-27
 
 ---
 
@@ -15,15 +15,15 @@
 - [x] Registry - Global component registry
 - [x] Endian - Portable byte-order conversion
 
-#### Transport Layer (70% - 8 of 11 planned)
-- [x] Loopback - In-memory testing transport
-- [x] File - Store-and-forward transport
-- [x] TCP - TCP socket transport (RFC 793)
-- [x] UDP - UDP datagram transport (RFC 768)
-- [x] DNS Tunnel - Covert channel via DNS (RFC 1035) - STUB
-- [x] Bluetooth - Bluetooth transport - STUB
-- [x] WiFi Direct - WiFi Direct transport - STUB
-- [x] Infrared - IrDA transport - STUB
+#### Transport Layer (82% - 9 of 11 planned)
+- [x] Loopback - In-memory testing transport (FULL)
+- [x] File - Store-and-forward transport (FULL)
+- [x] TCP - TCP socket transport (RFC 793) (FULL)
+- [x] UDP - UDP datagram transport (RFC 768) (FULL)
+- [x] DNS Tunnel - Covert channel via DNS (RFC 1035) (FULL - Base32 encoding, 6 tests)
+- [x] Bluetooth - Bluetooth transport - STUB (requires platform APIs)
+- [x] WiFi Direct - WiFi Direct transport - STUB (requires platform APIs)
+- [x] Infrared - IrDA transport - STUB (requires platform APIs)
 - [ ] Audio - Audio tone-based transport
 - [ ] QR - QR code-based transport
 - [ ] FM Radio - FM radio data transport
@@ -35,22 +35,22 @@
 - [x] Chunked - Chunked transfer encoding
 
 #### Crypto Layer (50% - 3 of 6 planned)
-- [x] None - Pass-through (Tier 0)
-- [x] XOR Stream - XOR obfuscation (Tier 1)
-- [x] ChaCha20 - ChaCha20 encryption (Tier 2, RFC 8439)
+- [x] None - Pass-through (Tier 0) (FULL)
+- [x] XOR Stream - XOR obfuscation (Tier 1) (FULL)
+- [x] ChaCha20 - ChaCha20 encryption (Tier 2, RFC 8439) (FULL - 7 tests with RFC vectors)
 - [ ] AES - AES encryption (Tier 2, NIST)
-- [x] Public Key - RSA/ECC public-key (Tier 3, RFC 8017) - STUB
+- [x] Public Key - RSA/ECC public-key (Tier 3, RFC 8017) - STUB (requires big integer lib)
 - [ ] Advanced - Future methods (Tier 4)
 
 #### Test Coverage
-- [x] Unit Tests - 153 tests, 678 assertions, 100% coverage
-- [x] User Scenario Tests - Implemented (11 scenarios)
-- [ ] Integration Tests - Not yet implemented
+- [x] Unit Tests - 140 tests, 673 assertions, 100% coverage
+- [x] User Scenario Tests - 19 tests across 6 scenarios (crypto, store-and-forward, file transfer, HTTP, TCP, UDP)
+- [x] E2E Tests - Shell-based tests for SMTP, IMAP, combined scenarios
 - [ ] Performance Tests - Not yet implemented
 
 ---
 
-## Phase 2: Essential Transports & Services (✅ COMPLETED)
+## Phase 2: Essential Transports & Services (✅ COMPLETED - Expanded)
 
 ### High Priority
 
@@ -90,29 +90,74 @@
 #### Services
 - [x] HTTP Server (RFC 9110, RFC 9112)
   - [x] Header file with RFC documentation
-  - [x] Implementation file (basic static server)
-  - [x] Unit tests (17 tests)
-  - [x] User scenario tests (serve static files)
+  - [x] Implementation file (static file server with MIME types)
+  - [x] Unit tests (16 tests)
+  - [x] User scenario tests (3 scenarios: serve static files, 404 handling, multiple files)
+  
+- [x] SMTP Protocol (RFC 5321)
+  - [x] Header file with RFC documentation
+  - [x] Implementation file (command parsing, state machine)
+  - [x] Unit tests (8 tests)
+  - [x] E2E tests (shell-based)
+  
+- [x] IMAP Protocol (RFC 3501)
+  - [x] Header file with RFC documentation
+  - [x] Implementation file (command parsing)
+  - [x] Unit tests (9 tests)
+  - [x] E2E tests (shell-based)
+  
+- [x] Mail Storage System
+  - [x] Header file
+  - [x] Implementation file (persistence, fetch, list, delete)
+  - [x] Unit tests (6 tests)
 
 #### Documentation
-- [ ] docs/protocols.md - RFC mapping and protocol details
+- [x] docs/rfc_references.md - Complete RFC reference list
+- [x] docs/test_plan.md - Test strategy and scenarios
+- [x] docs/architecture.md - Architecture overview
+- [x] docs/STATUS.md - Current implementation status
+- [ ] docs/protocols.md - Protocol specifications (partial in rfc_references.md)
 - [ ] docs/ux.md - User experience guidelines
-- [ ] docs/test_plan.md - Test strategy and scenarios
-- [ ] docs/rfc_references.md - Complete RFC reference list
 
 #### User Scenario Tests
 - [x] tests/scenarios/ - Directory for scenario tests
-- [x] Scenario: Send file over loopback with framing
-- [x] Scenario: Multi-hop message routing
-- [x] Scenario: HTTP server serving static content
-- [x] Scenario: Store-and-forward messaging via file transport
-- [x] Scenario: Encrypted communication end-to-end
-- [x] Scenario: TCP client-server communication
-- [x] Scenario: UDP datagram exchange
+- [x] Scenario: End-to-end crypto (2 tests: roundtrip, layer integration)
+- [x] Scenario: Store-and-forward messaging (2 tests: send/receive, persistence)
+- [x] Scenario: File transfer over loopback (3 tests: send/receive, bidirectional, empty file)
+- [x] Scenario: HTTP server serving static content (3 tests: serve files, 404, multiple files)
+- [x] Scenario: TCP client-server communication (4 tests: basic exchange, bidirectional, lifecycle, errors)
+- [x] Scenario: UDP datagram exchange (5 tests: boundaries, variable sizes, timeout, TCP comparison, errors)
+- [x] E2E tests (tests/e2e/): Shell scripts for SMTP, IMAP, and combined scenarios
 
 ---
 
-## Phase 3: Advanced Features (Planned)
+## Phase 3: Transport and Crypto Expansion (✅ COMPLETED)
+
+### Completed
+- [x] ChaCha20 implementation (RFC 8439)
+  - [x] Header file with RFC documentation
+  - [x] Implementation file (pure C++, zero dependencies)
+  - [x] Unit tests (7 tests, 21 assertions)
+  - [x] RFC test vectors validated
+
+- [x] DNS Tunnel transport (RFC 1035)
+  - [x] Header file with RFC documentation
+  - [x] Implementation file (Base32 encoding, DNS query construction)
+  - [x] Unit tests (6 tests, 14 assertions)
+  - [x] UDP socket communication to DNS server
+  
+- [x] Transport stub implementations
+  - [x] Bluetooth - stub with TODO markers (requires platform APIs)
+  - [x] WiFi Direct - stub with TODO markers (requires platform APIs)
+  - [x] Infrared (IrDA) - stub with TODO markers (requires platform APIs)
+
+- [x] Public Key Crypto stub
+  - [x] Header file with RFC documentation
+  - [x] Stub implementation with TODO markers (requires big integer library)
+
+---
+
+## Phase 4: Advanced Features (Planned)
 
 ### Onion Routing
 - [ ] onion/onion_router.h - Multi-hop routing interface
@@ -131,46 +176,58 @@
 - [ ] Unit tests
 - [ ] User scenario tests
 
-### Additional Services
-- [ ] SMTP service (RFC 5321)
-- [ ] IMAP service (RFC 3501)
+### Additional Services (Planned)
 - [ ] Microblog service (ActivityPub W3C)
 - [ ] File Exchange service
+- [ ] Full network server integration (bind TCP sockets, accept connections for SMTP/IMAP/HTTP)
 
 ### Tools
+- [x] Log System (tool/log.h, tool/log.cpp)
+  - [x] 5 log levels (ERROR, WARN, INFO, DEBUG, TRACE)
+  - [x] Color output support
+  - [x] Configurable drivers
+  - [x] Example: examples/log_demo.cpp
+  
+- [x] CLI Framework (tool/cli.h, tool/cli.cpp)
+  - [x] Command registration
+  - [x] Service registration
+  - [x] Environment variable handling
+  - [x] Signal handlers for graceful shutdown
+  
 - [ ] Diagnostic tools (ping, arp, netstat, ifconfig, route)
 - [ ] Feed aggregation (RSS, Atom, JSON Feed)
 - [ ] SSH agentless monitoring
-- [ ] CLI interface and command parser
+- [ ] Full CLI command parser and interface
 
 ---
 
-## Phase 4: Analog & Specialized Transports (Planned)
+## Phase 5: Analog & Specialized Transports (Partial)
 
-- [ ] DNS Tunnel transport (RFC 1035 extensions)
-- [ ] Bluetooth transport
-- [ ] WiFi Direct transport
+- [x] DNS Tunnel transport (RFC 1035) - FULLY IMPLEMENTED
+- [x] Bluetooth transport - STUB (requires BlueZ or platform Bluetooth APIs)
+- [x] WiFi Direct transport - STUB (requires wpa_supplicant or platform WiFi APIs)
+- [x] Infrared transport - STUB (requires serial port libraries)
 - [ ] Audio tones transport
 - [ ] QR code transport
-- [ ] Infrared transport
 - [ ] FM radio data transport
 
 ---
 
-## Phase 5: Advanced Crypto (Planned)
+## Phase 6: Advanced Crypto (Partial)
 
-- [ ] ChaCha20 implementation (RFC 8439)
+- [x] ChaCha20 implementation (RFC 8439) - FULLY IMPLEMENTED
+- [x] Public-key cryptography (RFC 8017) - STUB (requires big integer library or OpenSSL)
 - [ ] AES implementation (NIST standards)
-- [ ] Public-key cryptography (RFC 8017)
 - [ ] Key exchange protocols
 - [ ] Certificate handling (X.509, RFC 5280)
 
 ---
 
-## Phase 6: UX & Tooling (Planned)
+## Phase 7: UX & Tooling (Partial)
 
 ### UX Surfaces
-- [ ] CLI interface (scriptable, deterministic)
+- [x] CLI framework (partial - command registration, service registration)
+- [ ] Full CLI interface (scriptable, deterministic)
 - [ ] TUI dashboard (status monitoring)
 - [ ] Web UI (HTML/JS, read-only default)
 - [ ] JSON API (automation)
@@ -186,30 +243,30 @@
 
 ## Testing Strategy
 
-### Unit Tests
+### Unit Tests (✅ COMPLETED)
 - [x] Core primitives - 12 tests
-- [x] Transports (loopback, file) - 8 tests
-- [x] Framers (raw, length-prefix) - 9 tests
-- [x] Crypto (none) - 4 tests
-- [ ] Additional transports (TCP, UDP, etc.) - TBD
-- [ ] Additional framers (CRC, chunked) - TBD
-- [ ] Additional crypto (XOR, ChaCha20, AES) - TBD
+- [x] Transports - 33 tests (loopback, file, TCP, UDP, DNS tunnel)
+- [x] Framers - 23 tests (raw, length-prefix, CRC, chunked)
+- [x] Crypto - 16 tests (none, XOR stream, ChaCha20)
+- [x] Services - 39 tests (mail storage, SMTP, IMAP, HTTP, HTTP server)
 
-### User Scenario Tests (New)
-- [ ] File transfer scenario
+### User Scenario Tests (✅ COMPLETED - 19 tests)
+- [x] File transfer scenario (3 tests)
+- [x] End-to-end encryption scenario (2 tests)
+- [x] HTTP service scenario (3 tests)
+- [x] Store-and-forward scenario (2 tests)
+- [x] TCP communication scenario (4 tests)
+- [x] UDP datagram scenario (5 tests)
 - [ ] Multi-transport failover scenario
-- [ ] End-to-end encryption scenario
-- [ ] HTTP service scenario
 - [ ] P2P mesh communication scenario
-- [ ] Store-and-forward scenario
 - [ ] Onion routing scenario
 - [ ] Federation sync scenario
 
-### Integration Tests
-- [ ] Transport + Framer integration
-- [ ] Transport + Framer + Crypto integration
-- [ ] Full stack integration (all layers)
-- [ ] Service integration tests
+### Integration Tests (Partial)
+- [x] Transport + Framer integration (covered in scenarios)
+- [x] Transport + Framer + Crypto integration (end-to-end crypto scenario)
+- [x] Full stack integration (examples/simple_message.cpp)
+- [x] Service integration tests (E2E shell tests for SMTP/IMAP)
 - [ ] Federation integration tests
 
 ### Performance Tests
@@ -226,10 +283,12 @@
 ### Required Documentation Files
 
 #### High Priority
-- [ ] docs/protocols.md - Protocol specifications and RFC mappings
+- [x] docs/rfc_references.md - Complete RFC reference guide
+- [x] docs/test_plan.md - Comprehensive test strategy
+- [x] docs/architecture.md - Architecture overview
+- [x] docs/STATUS.md - Current implementation status
+- [ ] docs/protocols.md - Protocol specifications (partial in rfc_references.md)
 - [ ] docs/ux.md - User experience design and principles
-- [ ] docs/test_plan.md - Comprehensive test strategy
-- [ ] docs/rfc_references.md - Complete RFC reference guide
 
 #### Medium Priority
 - [ ] API documentation (Doxygen or similar)
@@ -304,11 +363,13 @@ All implementation files must include RFC references in header comments:
 
 ## Directory Structure Completion
 
+### Existing Directories
+- [x] tests/scenarios/ - User scenario tests (19 tests)
+- [x] tests/e2e/ - End-to-end integration tests (shell scripts)
+- [x] examples/ - Example applications (simple_message.cpp, log_demo.cpp)
+
 ### Missing Directories to Create
-- [ ] tests/scenarios/ - User scenario tests
-- [ ] tests/integration/ - Integration tests
 - [ ] tests/performance/ - Performance benchmarks
-- [ ] examples/send_file/ - File transfer example
 - [ ] examples/microblog_demo/ - Microblog example
 - [ ] examples/p2p_mesh_demo/ - P2P mesh example
 - [ ] examples/web_service_demo/ - Web service example
@@ -331,29 +392,39 @@ All implementation files must include RFC references in header comments:
 
 ---
 
-## Immediate Next Steps (Sprint 2)
+## Immediate Next Steps (Current Sprint)
 
-1. **✅ Phase 2 Implementation - COMPLETED**
+1. **✅ Phase 2 & 3 Implementation - COMPLETED**
    - [x] TCP transport with RFC 793 documentation
    - [x] UDP transport with RFC 768 documentation
+   - [x] DNS Tunnel transport with RFC 1035 and Base32 encoding
    - [x] CRC framer with CRC32 checksums
    - [x] Chunked framer with RFC 9112 implementation
    - [x] XOR Stream crypto (Tier 1)
+   - [x] ChaCha20 crypto (Tier 2, RFC 8439)
    - [x] HTTP Server with RFC 9110/9112 documentation
-   - [x] All unit tests (146 tests, 657 assertions)
-   - [x] User scenario tests (11 scenarios)
+   - [x] SMTP protocol implementation (RFC 5321)
+   - [x] IMAP protocol implementation (RFC 3501)
+   - [x] Mail storage system
+   - [x] All unit tests (159 tests, 692 assertions)
+   - [x] User scenario tests (19 tests across 6 scenarios)
+   - [x] E2E tests (shell-based for SMTP/IMAP)
    - [x] Updated CMakeLists.txt
    - [x] Cross-platform support (Linux, macOS, Windows)
 
-2. **Create Missing Documentation** (Next Sprint)
-   - [ ] docs/protocols.md
+2. **✅ Documentation - PARTIALLY COMPLETED**
+   - [x] docs/rfc_references.md
+   - [x] docs/test_plan.md
+   - [x] docs/architecture.md
+   - [x] docs/STATUS.md
+   - [ ] docs/protocols.md (partially covered in rfc_references.md)
    - [ ] docs/ux.md
-   - [ ] docs/test_plan.md
-   - [ ] docs/rfc_references.md
 
-3. **Implement Advanced Crypto** (Next Sprint)
-   - [ ] ChaCha20 implementation (RFC 8439)
+3. **Next Priority Items**
    - [ ] AES implementation (NIST standards)
+   - [ ] Full implementation of platform-dependent transports (requires external APIs)
+   - [ ] Performance benchmarking framework
+   - [ ] Additional examples (microblog, P2P mesh, web service)
 
 ---
 
@@ -375,37 +446,11 @@ All implementation files must include RFC references in header comments:
 - **Test Runtime**: Currently <1s (maintained ✓)
 - **Binary Size**: Currently ~200KB tests (reasonable growth)
 - **Code Quality**: 0 warnings, 0 security alerts (maintained ✓)
-- **Test Count**: 153 tests (up from 146)
-- **Assertions**: 678 assertions (up from 657)
+- **Test Count**: 159 tests (140 unit + 19 scenario tests)
+- **Assertions**: 692 assertions
+- **E2E Tests**: Shell-based tests for SMTP, IMAP, combined scenarios
 
----
 
-## Phase 3: Transport and Crypto Expansion (✅ IN PROGRESS)
-
-### Completed
-- [x] ChaCha20 implementation (RFC 8439)
-  - [x] Header file with RFC documentation
-  - [x] Implementation file (pure C++, zero dependencies)
-  - [x] Unit tests (7 tests, 21 assertions)
-  - [x] RFC test vectors validated
-
-- [x] Transport stub implementations
-  - [x] DNS Tunnel (RFC 1035) - stub with TODO markers
-  - [x] Bluetooth - stub with TODO markers
-  - [x] WiFi Direct - stub with TODO markers
-  - [x] Infrared (IrDA) - stub with TODO markers
-
-- [x] Public Key Crypto stub
-  - [x] Header file with RFC documentation
-  - [x] Stub implementation with TODO markers
-
-### In Progress
-- [ ] Service network integration
-  - [ ] SMTP with TCP transport
-  - [ ] IMAP with TCP transport
-  - [ ] HTTP with TCP transport
-- [ ] AES implementation (FIPS 197)
-- [ ] Documentation updates
 
 ---
 
