@@ -330,10 +330,10 @@ docs/                # Documentation
 **Framer Layer** (100% - 4 of 4)
 - ✅ Raw, Length-prefix, CRC, Chunked
 
-**Crypto Layer** (50% - 3 of 6)
-- ✅ FULL: None, XOR Stream, ChaCha20 (RFC 8439)
+**Crypto Layer** (67% - 4 of 6 implemented)
+- ✅ FULL: None, XOR Stream, ChaCha20 (RFC 8439), **AES-128-CBC (NIST FIPS 197)**
 - ⚠️ STUB: Public Key/RSA (requires big integer library)
-- ⏳ Planned: AES, Advanced methods
+- ⏳ Planned: AES-256, Advanced methods
 
 **Services**
 - ✅ HTTP Server (RFC 9110/9112) - 16 tests
@@ -349,10 +349,10 @@ docs/                # Documentation
 
 All essential transports (TCP, UDP, DNS Tunnel), framers (CRC, Chunked), crypto (ChaCha20), and services (HTTP, SMTP, IMAP) implemented with comprehensive tests.
 
-#### ⏳ Phase 4: Advanced Features and Platform Integration (Planned - Q1 2026)
+#### 🔄 Phase 4: Advanced Features and Platform Integration (In Progress - Q1 2026)
 
 **High Priority:**
-- 🔴 AES Encryption (NIST FIPS 197, CBC and GCM modes)
+- ✅ **AES Encryption** (NIST FIPS 197, CBC mode) - **COMPLETED**
 - 🟡 DNS Tunnel Enhancement (rate limiting, Base32 encoding, anti-detection)
 - 🔴 Bluetooth Transport (Linux with BlueZ, Windows with Winsock2)
 
@@ -398,10 +398,10 @@ See `docs/PHASE5_ROADMAP.md` for detailed implementation plan.
 
 ### Test Coverage
 
-- **185 tests** (158 unit + 27 scenario), **826 assertions**
+- **195 tests** (168 unit + 27 scenario), **1041 assertions**
 - **100% code coverage** maintained
 - E2E shell tests for SMTP, IMAP
-- Build time: <12s, Test runtime: <1s
+- Build time: <15s, Test runtime: <1s
 - Zero warnings, zero security alerts
 
 ### Documentation
