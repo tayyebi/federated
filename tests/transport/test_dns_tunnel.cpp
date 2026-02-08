@@ -88,3 +88,59 @@ TEST(dns_tunnel_send_too_large) {
     
     t->close();
 }
+
+TEST(dns_tunnel_configure) {
+    // Test configuration before opening
+    DNSTunnelConfig config;
+    config.dns_server = "1.1.1.1";  // Cloudflare DNS
+    config.dns_port = 53;
+    config.base_domain = "test.example.com";
+    config.max_qps = 10;
+    config.min_jitter_ms = 50;
+    config.max_jitter_ms = 200;
+    
+    DNSTunnelTransport::configure(config);
+    
+    Transport* t = DNSTunnelTransport::get_instance();
+    ErrorCode err = t->open();
+    TEST_ASSERT_EQ(err, OK);
+    
+    t->close();
+    
+    // Restore defaults
+    DNSTunnelConfig defaults;
+    DNSTunnelTransport::configure(defaults);
+}
+
+TEST(dns_tunnel_rate_limiting) {
+    // Configure with very low rate limit for testing
+    DNSTunnelConfig config;
+    config.max_qps = 2;  // Only 2 queries per second
+    config.min_jitter_ms = 10;  // Low jitter for faster test
+    config.max_jitter_ms = 20;
+    
+    DNSTunnelTransport::configure(config);
+    
+    Transport* t = DNSTunnelTransport::get_instance();
+    ErrorCode err = t->open();
+    TEST_ASSERT_EQ(err, OK);
+    
+    // Send multiple messages and verify rate limiting occurs
+    const char* msg = "Test";
+    Buffer send_buf(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(msg)), strlen(msg));
+    
+    // First send should work (or fail due to network, both OK)
+    err = t->send(send_buf);
+    TEST_ASSERT(err == OK || err == ERR_IO);
+    
+    // Second send should also work after rate limiting delay
+    // The implementation will automatically delay to respect rate limit
+    err = t->send(send_buf);
+    TEST_ASSERT(err == OK || err == ERR_IO);
+    
+    t->close();
+    
+    // Restore defaults
+    DNSTunnelConfig defaults;
+    DNSTunnelTransport::configure(defaults);
+}

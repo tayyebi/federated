@@ -180,6 +180,7 @@ add_executable(federated_tests
     tests/scenarios/scenario_udp_datagram.cpp
     tests/scenarios/scenario_http_static_server.cpp
     tests/scenarios/scenario_onion_federation.cpp
+    tests/scenarios/scenario_dns_tunnel_rate_limit.cpp
 )
 
 target_link_libraries(federated_tests
