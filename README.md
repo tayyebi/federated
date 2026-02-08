@@ -353,7 +353,7 @@ All essential transports (TCP, UDP, DNS Tunnel), framers (CRC, Chunked), crypto 
 
 **High Priority:**
 - ✅ **AES Encryption** (NIST FIPS 197, CBC mode) - **COMPLETED**
-- 🟡 DNS Tunnel Enhancement (rate limiting, Base32 encoding, anti-detection)
+- ✅ **DNS Tunnel Rate Limiting** - Anti-detection features **COMPLETE** 🆕
 - 🔴 Bluetooth Transport (Linux with BlueZ, Windows with Winsock2)
 
 **Medium Priority:**
@@ -398,7 +398,7 @@ See `docs/PHASE5_ROADMAP.md` for detailed implementation plan.
 
 ### Test Coverage
 
-- **195 tests** (168 unit + 27 scenario), **1041 assertions**
+- **198 tests** (171 unit + 27 scenario), **1051 assertions**
 - **100% code coverage** maintained
 - E2E shell tests for SMTP, IMAP
 - Build time: <15s, Test runtime: <1s

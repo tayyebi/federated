@@ -23,7 +23,7 @@ The Federated project has successfully completed Phases 1-3 (core infrastructure
 ### 🔄 What Remains
 
 **High Priority** (Phase 4 - Q1-Q2 2026):
-1. DNS Tunnel Enhancement (rate limiting, anti-detection)
+1. ~~DNS Tunnel Enhancement (rate limiting, anti-detection)~~ - **PARTIALLY COMPLETE** ✅
 2. Bluetooth Transport (Linux, Windows)
 3. Platform-specific transport implementations
 
@@ -94,10 +94,19 @@ These have documented stub implementations but need platform-specific work:
 - **Blockers**: Requires serial port libraries or system calls
 
 **TRANSPORT-001: DNS Tunnel Enhancement** (HIGH PRIORITY)
-- **Status**: Basic implementation exists, needs enhancement
-- **Effort**: 4-6 days
-- **Current Features**: Basic send/receive, DNS query construction
+- **Status**: ✅ **PARTIALLY COMPLETE** - Rate limiting implemented
+- **Effort**: 4-6 days (2-3 hours completed, remaining work estimated)
+- **Current Features**: Basic send/receive, DNS query construction, **rate limiting, anti-detection jitter**
+- **Completed Features**:
+  - ✅ Rate limiting with configurable QPS (default: 5 queries/second)
+  - ✅ Random timing jitter for anti-detection (100-500ms)
+  - ✅ Configurable parameters (DNS server, port, base domain)
+  - ✅ Comprehensive unit and scenario tests
 - **Missing Features**:
+  - ❌ Enhanced TXT record parsing
+  - ❌ Subdomain label splitting (63 char per label, 253 total) - basic implementation exists
+  - ❌ E2E test with real DNS server
+  - ❌ Scenario tests for large payloads
   - Proper Base32 encoding (RFC 4648)
   - Subdomain label splitting (63 char per label, 253 total)
   - Rate limiting (configurable QPS)
@@ -291,7 +300,7 @@ All core services are fully implemented and tested:
 1. ✅ **TCP/UDP networking** - Full socket implementation
 2. ✅ **ChaCha20 encryption** - RFC-compliant strong crypto
 3. ✅ **AES-128-CBC encryption** - NIST-compliant standard crypto
-4. ✅ **DNS Tunnel** - Basic covert channel communication
+4. ✅ **DNS Tunnel with rate limiting** - Covert channel with anti-detection 🆕
 5. ✅ **CRC/Chunked framing** - Data integrity and streaming
 6. ✅ **HTTP/SMTP/IMAP services** - Full protocol implementations
 7. ✅ **Onion Routing** - Anonymous multi-hop communication
@@ -300,7 +309,7 @@ All core services are fully implemented and tested:
 ### What Requires Work
 
 **Immediate/Short-term** (1-2 months):
-- DNS Tunnel enhancement for production use
+- ~~DNS Tunnel enhancement~~ - Rate limiting DONE ✅, TXT parsing remains
 - Bluetooth transport for at least one platform (Linux)
 - Documentation updates (quick wins)
 
@@ -359,10 +368,10 @@ The Federated project has made **excellent progress** with ~70% of core features
 - Full UI surfaces (CLI/TUI/Web)
 
 **Estimated Remaining Effort:**
-- High Priority items: ~12-18 days
+- High Priority items: ~10-16 days (was 12-18, DNS rate limiting complete)
 - Medium Priority items: ~20-27 days
 - Low Priority items: ~38-52 days
-- **Total**: ~70-97 days of focused development work
+- **Total**: ~68-95 days of focused development work
 
 The project is in **great shape** for its stage of development, with clear roadmaps and tracking for all remaining work. Most TODOs are either platform-dependent (requiring specific APIs) or future enhancements beyond the core functionality.
 

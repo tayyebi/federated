@@ -116,9 +116,9 @@
 
 **Completed in Phase 4:**
 - ✅ **AES-128-CBC Encryption**: NIST FIPS 197 (CBC mode implemented)
+- ✅ **DNS Tunnel Rate Limiting**: Anti-detection features with configurable QPS and jitter 🆕
 
 **In Progress:**
-- 🟡 DNS Tunnel Enhancement (rate limiting, Base32 encoding, anti-detection)
 - 🔴 Bluetooth Transport (Linux with BlueZ, Windows with Winsock2)
 
 **Medium Priority:**
@@ -174,24 +174,24 @@ See `docs/TODO_TRACKING.md` for comprehensive TODO tracking across the codebase.
 | Component | Tests | Assertions | Coverage | Status |
 |-----------|-------|------------|----------|--------|
 | Core Primitives | 20 | 72 | 100% | ✅ Pass |
-| Transports | 43 | 158 | 100% | ✅ Pass |
+| Transports | 46 | 169 | 100% | ✅ Pass |
 | Framers | 20 | 76 | 100% | ✅ Pass |
 | Crypto | 16 | 64 | 100% | ✅ Pass |
 | Services | 39 | 199 | 100% | ✅ Pass |
 | Tools | 5 | 17 | 100% | ✅ Pass |
 | Onion/Federation | 26 | 110 | 100% | ✅ Pass |
-| Scenarios | 26 | 345 | 100% | ✅ Pass |
+| Scenarios | 27 | 351 | 100% | ✅ Pass |
 | E2E (Shell) | 2 | N/A | Manual | ✅ Pass |
-| **Total** | **195** | **1041** | **100%** | **✅ Pass** |
+| **Total** | **198** | **1051** | **100%** | **✅ Pass** |
 
 **Test Breakdown:**
-- **Unit Tests:** 168 tests across all components
+- **Unit Tests:** 171 tests across all components
 - **Scenario Tests:** 27 integration scenarios
 - **E2E Tests:** 2 end-to-end shell scripts (SMTP, IMAP)
 
 **Performance:**
 - **Build Time:** <15 seconds (clean build on modern hardware)
-- **Test Runtime:** <1 second (all 195 tests)
+- **Test Runtime:** <1 second (all 198 tests)
 - **Binary Size:** ~350KB (test executable with all components)
 
 ---
