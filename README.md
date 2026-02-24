@@ -254,23 +254,392 @@ fed->broadcast(message);
 
 ## Architecture
 
-```
-Application Layer
-       ↓
-[ Federation ] ← Peer Discovery & Coordination
-       ↓
-[ Onion Router ] ← Multi-hop Anonymous Routing
-       ↓
-[ Service / Tool ] ← HTTP, SMTP, IMAP, Diagnostics
-       ↓
-[ Crypto ] ← ChaCha20, XOR, None (AES planned)
-       ↓
-[ Framer ] ← CRC, Length-prefix, Chunked, Raw
-       ↓
-[ Transport ] ← TCP, UDP, DNS Tunnel, File, Loopback (+ Bluetooth, WiFi, IR stubs)
+```mermaid
+flowchart TD
+    App["🖥 Application / CLI"]
+    Fed["Federation\nPeer Discovery · Broadcast · Routing"]
+    Onion["Onion Router\nMulti-hop Anonymous Routing"]
+    Svc["Services\nHTTP · SMTP · IMAP · Mail Storage"]
+    Crypto["Crypto\nNone · XOR · ChaCha20 · AES-128-CBC · Public-Key stub"]
+    Framer["Framer\nRaw · Length-prefix · CRC · Chunked"]
+    Transport["Transport\nTCP · UDP · DNS-Tunnel · File · Loopback · Bluetooth stub · WiFi-Direct stub · Infrared stub"]
+
+    App --> Fed
+    Fed --> Onion
+    Onion --> Svc
+    Svc --> Crypto
+    Crypto --> Framer
+    Framer --> Transport
+
+    subgraph Core["Core Primitives"]
+        Buffer["Buffer"]
+        Packet["Packet"]
+        ErrorCode["ErrorCode"]
+        Registry["Registry"]
+    end
+
+    Transport -.->|uses| Core
+    Framer -.->|uses| Core
+    Crypto -.->|uses| Core
+    Svc -.->|uses| Core
+    Onion -.->|uses| Core
+    Fed -.->|uses| Core
 ```
 
 All layers are independent, modular, and testable.
+
+---
+
+## UML Diagrams
+
+### Class Diagram
+
+```mermaid
+classDiagram
+    class Buffer {
+        +uint8_t* data
+        +size_t size
+        +Buffer()
+        +Buffer(uint8_t* d, size_t s)
+    }
+
+    class Packet {
+        +Buffer payload
+        +Packet()
+        +Packet(Buffer)
+    }
+
+    class ErrorCode {
+        <<enumeration>>
+        OK
+        ERR_IO
+        ERR_FORMAT
+        ERR_TIMEOUT
+        ERR_CRYPTO
+        ERR_UNSUPPORTED
+        ERR_AUTH
+        ERR_INTERNAL
+        ERR_INVALID_ARG
+        ERR_OUT_OF_MEMORY
+        ERR_NOT_FOUND
+        ERR_NOT_INITIALIZED
+    }
+
+    class Registry {
+        +Transport* transports[32]
+        +Framer* framers[16]
+        +Crypto* cryptos[16]
+        +Service* services[32]
+        +Tool* tools[64]
+        +register_transport(Transport*) bool
+        +register_framer(Framer*) bool
+        +register_crypto(Crypto*) bool
+        +find_transport(name) Transport*
+        +find_framer(name) Framer*
+        +find_crypto(name) Crypto*
+    }
+
+    class Transport {
+        <<interface>>
+        +const char* name
+        +open() ErrorCode
+        +close() ErrorCode
+        +send(Buffer) ErrorCode
+        +recv(Buffer) ErrorCode
+        +available() bool
+    }
+
+    class Framer {
+        <<interface>>
+        +const char* name
+        +encode(Buffer, Buffer) ErrorCode
+        +decode(Buffer, Buffer) ErrorCode
+    }
+
+    class Crypto {
+        <<interface>>
+        +const char* name
+        +size_t key_size
+        +encrypt(Buffer, Buffer, Buffer) ErrorCode
+        +decrypt(Buffer, Buffer, Buffer) ErrorCode
+    }
+
+    class OnionRouter {
+        <<abstract>>
+        +create_circuit(Node*, size_t, Circuit**) ErrorCode
+        +send_onion(Circuit*, Buffer, OnionPacket) ErrorCode
+        +peel_layer(OnionPacket, OnionPacket, Node*) ErrorCode
+        +destroy_circuit(Circuit*) ErrorCode
+        +enable_bridge_mode() ErrorCode
+        +disable_bridge_mode() ErrorCode
+        +is_bridge_mode() bool
+    }
+
+    class SimpleOnionRouter {
+        -bool bridge_mode_enabled
+        -Circuit** active_circuits
+        -size_t circuit_capacity
+        -size_t circuit_count
+        -uint32_t next_circuit_id
+        +get_instance()$ OnionRouter*
+    }
+
+    class Federation {
+        <<abstract>>
+        +initialize(char**, size_t) ErrorCode
+        +discover_peers(Peer*, size_t*, size_t) ErrorCode
+        +register_node(NodeInfo) ErrorCode
+        +send_to_peer(Peer, Buffer) ErrorCode
+        +broadcast(Buffer) ErrorCode
+        +add_peer(Peer) ErrorCode
+        +remove_peer(uint32_t) ErrorCode
+        +clear_peers() ErrorCode
+    }
+
+    class SimpleFederation {
+        -Peer* peer_list
+        -size_t peer_capacity
+        -size_t peer_count
+        -bool is_initialized
+        -NodeInfo local_node_info
+        +get_instance()$ Federation*
+    }
+
+    class Circuit {
+        +uint32_t circuit_id
+        +Node* hops
+        +size_t hop_count
+        +Crypto** crypto_layers
+        +Transport* transport
+        +bool is_active
+        +uint64_t created_at
+    }
+
+    class Node {
+        +uint32_t node_id
+        +char address[256]
+        +uint16_t port
+        +uint8_t session_key[32]
+        +uint8_t capabilities
+    }
+
+    class OnionPacket {
+        +uint8_t* data
+        +size_t size
+        +uint32_t circuit_id
+    }
+
+    class Peer {
+        +uint32_t peer_id
+        +char address[256]
+        +uint16_t port
+        +uint64_t last_seen
+        +uint32_t latency_ms
+        +uint8_t capabilities
+        +bool is_trusted
+    }
+
+    OnionRouter <|-- SimpleOnionRouter
+    Federation <|-- SimpleFederation
+    SimpleOnionRouter "1" --> "*" Circuit : manages
+    Circuit --> "*" Node : hops
+    Circuit --> "*" Crypto : crypto_layers
+    Circuit --> Transport : uses
+    SimpleFederation "1" --> "*" Peer : peer_list
+    Registry --> "*" Transport : holds
+    Registry --> "*" Framer : holds
+    Registry --> "*" Crypto : holds
+    Packet --> Buffer : payload
+```
+
+---
+
+### Module Dependency Graph
+
+```mermaid
+graph LR
+    subgraph foundation["Foundation"]
+        core["core\n(Buffer · Packet · Error · Registry · Endian)"]
+    end
+
+    subgraph transports["Transport Layer"]
+        loopback["Loopback ✅"]
+        file["File ✅"]
+        tcp["TCP ✅"]
+        udp["UDP ✅"]
+        dns["DNS Tunnel ✅"]
+        bt["Bluetooth ⚠️ stub"]
+        wifi["WiFi-Direct ⚠️ stub"]
+        ir["Infrared ⚠️ stub"]
+    end
+
+    subgraph framers["Framer Layer"]
+        raw["Raw ✅"]
+        lp["Length-prefix ✅"]
+        crc["CRC ✅"]
+        chunked["Chunked ✅"]
+    end
+
+    subgraph cryptos["Crypto Layer"]
+        none["None ✅"]
+        xor["XOR Stream ✅"]
+        chacha["ChaCha20 ✅"]
+        aes["AES-128-CBC ✅"]
+        pubkey["Public Key ⚠️ stub"]
+    end
+
+    subgraph services["Service Layer"]
+        http["HTTP ✅"]
+        smtp["SMTP ✅"]
+        imap["IMAP ✅"]
+        mail["Mail Storage ✅"]
+    end
+
+    subgraph routing["Routing Layer"]
+        onion["Onion Router ✅"]
+        federation["Federation ✅"]
+    end
+
+    subgraph tools["Tools"]
+        log["Log ✅"]
+        cli["CLI ✅"]
+    end
+
+    loopback & file & tcp & udp & dns & bt & wifi & ir --> core
+    raw & lp & crc & chunked --> core
+    none & xor & chacha & aes & pubkey --> core
+    http & smtp & imap --> core
+    smtp --> mail
+    imap --> mail
+    onion --> core
+    onion --> cryptos
+    onion --> transports
+    federation --> core
+    log --> core
+    cli --> core
+```
+
+---
+
+### End-to-End Data Flow
+
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Fed as Federation
+    participant Onion as OnionRouter
+    participant Crypto as Crypto (ChaCha20)
+    participant Framer as Framer (CRC)
+    participant TCP as Transport (TCP)
+    participant Net as Network
+
+    App->>Fed: discover_peers()
+    Fed-->>App: peers[]
+
+    App->>Onion: create_circuit(hops[3])
+    Onion-->>App: Circuit*
+
+    App->>Onion: send_onion(circuit, plaintext)
+
+    Note over Onion,Crypto: Apply layers inside-out
+    Onion->>Crypto: encrypt(data, key_hop3)
+    Crypto-->>Onion: layer3_encrypted
+    Onion->>Crypto: encrypt(layer3, key_hop2)
+    Crypto-->>Onion: layer2_encrypted
+    Onion->>Crypto: encrypt(layer2, key_hop1)
+    Crypto-->>Onion: onion_packet
+
+    Onion->>Framer: encode(onion_packet)
+    Framer-->>Onion: framed_data
+
+    Onion->>TCP: send(framed_data)
+    TCP->>Net: raw bytes
+```
+
+---
+
+### Onion Routing: Circuit Traversal
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as Node A (Bridge)
+    participant B as Node B (Relay)
+    participant X as Node C (Exit)
+    participant D as Destination
+
+    Note over C: E_A(E_B(E_C(msg)))
+    C->>A: encrypted packet (3 layers)
+    Note over A: Peel layer A → E_B(E_C(msg))
+    A->>B: encrypted packet (2 layers)
+    Note over B: Peel layer B → E_C(msg)
+    B->>X: encrypted packet (1 layer)
+    Note over X: Peel layer C → msg (plaintext)
+    X->>D: plaintext message
+
+    D-->>X: response
+    Note over X: Wrap layer C
+    X-->>B: E_C(response)
+    Note over B: Wrap layer B
+    B-->>A: E_B(E_C(response))
+    Note over A: Wrap layer A
+    A-->>C: E_A(E_B(E_C(response)))
+```
+
+---
+
+### SMTP Protocol State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> INIT : connection accepted
+    INIT --> GREETED : HELO / EHLO
+    GREETED --> MAIL : MAIL FROM
+    MAIL --> RCPT : RCPT TO
+    RCPT --> RCPT : RCPT TO (additional recipient)
+    RCPT --> DATA : DATA
+    DATA --> RECV_BODY : receiving body lines
+    RECV_BODY --> DONE : "." (end-of-message marker)
+    DONE --> GREETED : RSET (reset for next message)
+    DONE --> [*] : QUIT
+    GREETED --> [*] : QUIT
+
+    MAIL --> ERROR : invalid state transition
+    RCPT --> ERROR : invalid state transition
+    DATA --> ERROR : invalid state transition
+    ERROR --> [*] : connection closed
+```
+
+---
+
+### Federated Network Topology
+
+```mermaid
+graph TD
+    subgraph Network["Federated Overlay Network"]
+        Bootstrap["Bootstrap Node\n(Directory Service)"]
+        NodeA["Node A\nBridge · Relay"]
+        NodeB["Node B\nRelay · Exit"]
+        NodeC["Node C\nDirectory · Relay"]
+        NodeD["Node D\nRelay · Storage"]
+    end
+
+    Client["Client Node"]
+    Dest["Destination\n(Standard Server or Federated Node)"]
+
+    Bootstrap --- NodeA
+    Bootstrap --- NodeB
+    Bootstrap --- NodeC
+    NodeA --- NodeB
+    NodeA --- NodeD
+    NodeB --- NodeC
+    NodeC --- NodeD
+
+    Client -->|"① Circuit: A → B → C"| NodeA
+    NodeA -->|"② relay (peel 1 layer)"| NodeB
+    NodeB -->|"③ relay (peel 1 layer)"| NodeC
+    NodeC -->|"④ exit (plaintext)"| Dest
+```
 
 ---
 
